@@ -4,6 +4,16 @@ Shooter de fiesta en 3D hecho en **Godot 4.5 (GDScript)**. Segundo juego de la s
 
 **La idea en una línea:** solo un jugador tiene el Lanzador, y tenerlo te convierte en el blanco de todos.
 
+## Rumbo: juego competitivo
+
+El 12 de noviembre de 2026 Jorge dijo que quiere que Gunbearer se convierta en un juego competitivo. El alcance acordado es **por etapas: primero competitivo entre amigos en red local** (gratis y con la red actual); el salto a online con clasificación se decide después, cuando lo primero esté sólido. Cada decisión nueva debe respetar esto:
+
+- **Juego limpio antes que adorno:** todos los personajes tienen el mismo tamaño de impacto y la misma velocidad; el arte no cambia las reglas.
+- **Legibilidad:** tiene que verse al instante quién es quién y quién lleva el Lanzador.
+- **Arenas justas:** simétricas, sin puntos de reaparición con ventaja.
+- **Nada de azar que decida partidas** sin que Jorge lo apruebe.
+- **Ojo con la red actual:** cada cliente manda su propia posición, así que hoy un cliente tramposo podría moverse como quiera. Sirve entre amigos; para online competitivo habría que pasar el movimiento al host o a un servidor.
+
 ## Cómo trabajar con Jorge
 
 - Háblale en español, directo y en confianza. Llámalo Jorge.

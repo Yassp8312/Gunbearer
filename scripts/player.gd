@@ -49,6 +49,7 @@ var _respawn_sent: bool = false
 
 var _visual: Node3D = null
 var _char = null
+var _ring: MeshInstance3D = null
 var _body_mat: StandardMaterial3D = null
 var _launcher: Node3D = null
 var _marker: MeshInstance3D = null
@@ -150,6 +151,21 @@ func _build_rest() -> void:
 		tank.position = Vector3(0, 0.26, 0.1)
 		_launcher.add_child(tank)
 	_launcher.visible = false
+
+	# Aro del color del jugador en el suelo: se sabe quién es quién de un vistazo.
+	_ring = MeshInstance3D.new()
+	var rm := TorusMesh.new()
+	rm.inner_radius = 0.52
+	rm.outer_radius = 0.7
+	var rmat := StandardMaterial3D.new()
+	rmat.albedo_color = color
+	rmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	rm.material = rmat
+	_ring.mesh = rm
+	_ring.scale = Vector3(1.0, 0.15, 1.0)
+	_ring.position = Vector3(0, 0.04, 0)
+	_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_ring)
 
 	# Marca y luz sobre el portador
 	_marker = MeshInstance3D.new()
@@ -381,6 +397,7 @@ func eliminate(dir: Vector3, paint: Color) -> void:
 	respawn_timer = Tuning.respawn_time
 	dash_timer = 0.0
 	_trail.emitting = false
+	_ring.visible = false
 	var flat: Vector3 = Vector3(dir.x, 0.0, dir.z)
 	if flat.length() < 0.01:
 		flat = Vector3.FORWARD
@@ -417,6 +434,7 @@ func respawn_at(pos: Vector3) -> void:
 	net_vel = Vector3.ZERO
 	velocity = Vector3.ZERO
 	_visual.rotation = Vector3.ZERO
+	_ring.visible = true
 	if _char != null:
 		_char.set_tint(color)
 	else:
