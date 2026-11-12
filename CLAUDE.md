@@ -137,7 +137,7 @@ Host y cliente en `127.0.0.1`, 0 errores en ambas consolas, eventos y puntos id�
 
 ### Detalles a tener en cuenta
 
-- Git: inicializado, rama `main`, sin remoto todavía.
+- Git: rama `main`, remoto `origin` = `https://github.com/Yassp8312/Gunbearer` (público). En esta PC no hay `gh`: los repos se crean desde la web.
 - Los bots no usan malla de navegación: persiguen en línea recta y saltan o rodean cuando se atascan.
 - Dificultad normal: Jorge dijo que está "un poco difícil pero bien". No la bajes sin preguntar.
 - Si cambias `project.godot` con el editor abierto, Godot pregunta si recarga desde el disco: hay que decir que sí.
@@ -146,9 +146,8 @@ Host y cliente en `127.0.0.1`, 0 errores en ambas consolas, eventos y puntos id�
 ## Qué sigue, en orden
 
 1. Que Jorge juegue la red a mano (dos ventanas, y mejor aún dos PC) y arreglar lo que note.
-2. Subir el proyecto a GitHub como `Yassp8312/Gunbearer`.
-3. Arte: un solo cuerpo base con esqueleto y animaciones, y que los jugadores se diferencien por color y accesorios (sombreros, gafas, mochilas). Jorge quiere generar modelos con IA; la idea acordada es usar la IA para los accesorios y objetos sin animación, y Mixamo para el esqueleto del cuerpo base.
-4. Para después: power-ups, más arenas, mandos, online por internet.
+2. Arte: un solo cuerpo base con esqueleto y animaciones, y que los jugadores se diferencien por color y accesorios (sombreros, gafas, mochilas). Jorge quiere generar modelos con IA; la idea acordada es usar la IA para los accesorios y objetos sin animación, y Mixamo para el esqueleto del cuerpo base.
+3. Para después: power-ups, más arenas, mandos, online por internet.
 
 ## Estilo de código
 
