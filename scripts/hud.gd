@@ -54,7 +54,7 @@ func _ready() -> void:
 	_feed = _rich(17)
 
 	_overlay = ColorRect.new()
-	_overlay.color = Color(0.05, 0.06, 0.12, 0.78)
+	_overlay.color = Color(0.055, 0.075, 0.15, 0.86)
 	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_overlay.visible = false
 	_root.add_child(_overlay)
@@ -114,8 +114,25 @@ func show_pause(on: bool) -> void:
 		var note: String = ""
 		if game.online:
 			title = "MENÚ"
-			note = "\n[font_size=18]La partida sigue mientras tanto[/font_size]"
-		_overlay_text.text = "[center][font_size=54]%s[/font_size]%s\n\nWASD moverse   ·   Mouse apuntar\nClic izquierdo disparar   ·   Clic derecho apuntar fino\nEspacio saltar   ·   Shift dash   ·   R recargar\n\nEsc para seguir   ·   Q para salir al menú[/center]" % [title, note]
+			note = "\n[font_size=18][color=#9aa6d1]La partida sigue mientras tanto[/color][/font_size]"
+		# Las teclas que se muestran son las que el jugador tiene puestas en Opciones.
+		var k = Settings
+		var bb: String = "[center][font_size=54][color=#ffe14d]%s[/color][/font_size]%s\n\n" % [title, note]
+		bb += "[font_size=20][table=4]"
+		var pairs: Array = [
+			["Moverse", "%s %s %s %s" % [k.key_name("gb_forward"), k.key_name("gb_left"), k.key_name("gb_back"), k.key_name("gb_right")]],
+			["Apuntar", "Mouse"],
+			["Disparar", k.key_name("gb_shoot")],
+			["Apuntar fino", k.key_name("gb_aim")],
+			["Saltar", k.key_name("gb_jump")],
+			["Dash", k.key_name("gb_dash")],
+			["Recargar", k.key_name("gb_reload")],
+			["Menú", "Esc"],
+		]
+		for pr in pairs:
+			bb += "[cell padding=14,3,6,3][right][color=#9aa6d1]%s[/color][/right][/cell][cell padding=6,3,14,3][left]%s[/left][/cell]" % [pr[0], pr[1]]
+		bb += "[/table][/font_size]\n\n[color=#ffe14d]Esc[/color] para seguir   ·   [color=#ffe14d]Q[/color] para salir al menú[/center]"
+		_overlay_text.text = bb
 
 
 func show_end() -> void:
@@ -125,15 +142,28 @@ func show_end() -> void:
 	var title: String = "¡GANASTE!" if top == game.human else "Ganó %s" % top.display_name
 	if rank.size() > 1 and rank[1].score == top.score:
 		title = "¡Empate arriba!"
-	var bb: String = "[center][font_size=58][color=#%s]%s[/color][/font_size]\n\n" % [top.color.to_html(false), title]
+	var bb: String = "[center][font_size=54][color=#%s]%s[/color][/font_size]\n\n" % [top.color.to_html(false), title]
+	bb += "[font_size=19][table=7]"
+	for head in ["", "Jugador", "Puntos", "Robos", "Puntería", "Mejor racha", "Con el Lanzador"]:
+		bb += "[cell padding=10,2,10,6][color=#9aa6d1]%s[/color][/cell]" % head
 	var i: int = 1
 	for p in rank:
-		bb += "[color=#%s]%d.  %s   %d[/color]\n" % [p.color.to_html(false), i, p.display_name, p.score]
+		var acc: String = "-"
+		if p.stat_shots > 0:
+			acc = "%d %%" % roundi(100.0 * float(p.score) / float(p.stat_shots))
+		var who: String = p.display_name + ("  (tú)" if p == game.human else "")
+		var cells: Array = [str(i), who, str(p.score), str(p.stat_steals), acc, str(p.stat_best_streak), "%d s" % int(p.stat_time)]
+		for c in cells:
+			bb += "[cell padding=10,2,10,2][color=#%s]%s[/color][/cell]" % [p.color.to_html(false), c]
 		i += 1
-	if game.authority:
-		bb += "\nEnter: otra ronda   ·   Q: salir al menú[/center]"
+	bb += "[/table][/font_size]\n\n"
+	var y: String = "[color=#ffe14d]%s[/color]"
+	if game.authority and game.online:
+		bb += (y % "Enter") + " otra ronda   ·   " + (y % "B") + " volver a la sala   ·   " + (y % "Q") + " salir[/center]"
+	elif game.authority:
+		bb += (y % "Enter") + " otra ronda   ·   " + (y % "Q") + " salir al menú[/center]"
 	else:
-		bb += "\nEsperando a que el host lance otra ronda   ·   Q: salir[/center]"
+		bb += "Esperando a que el host decida   ·   " + (y % "Q") + " salir[/center]"
 	_overlay_text.text = bb
 	_overlay.visible = true
 	_overlay_text.visible = true
@@ -210,7 +240,7 @@ func _process(delta: float) -> void:
 		_dash.text = "Dash %.1f" % h.dash_cd
 		_dash.modulate = Color(1, 1, 1, 0.55)
 	else:
-		_dash.text = "Dash listo [Shift]"
+		_dash.text = "Dash listo [%s]" % Settings.key_name("gb_dash")
 		_dash.modulate = Color("7dffb0")
 	_dash.position = Vector2(20.0, vs.y - 60.0)
 	_dash.size = Vector2(300.0, 40.0)
@@ -249,6 +279,6 @@ func _process(delta: float) -> void:
 
 	_overlay.position = Vector2.ZERO
 	_overlay.size = vs
-	_overlay_text.position = Vector2(vs.x * 0.5 - 450.0, vs.y * 0.16)
-	_overlay_text.size = Vector2(900.0, 10.0)
+	_overlay_text.position = Vector2(vs.x * 0.5 - 520.0, vs.y * 0.12)
+	_overlay_text.size = Vector2(1040.0, 10.0)
 	_link.position = Vector2(vs.x - 110.0, vs.y - 28.0)

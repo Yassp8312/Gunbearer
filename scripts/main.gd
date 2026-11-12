@@ -8,6 +8,8 @@ const BallScript = preload("res://scripts/ball.gd")
 const MatchScript = preload("res://scripts/match.gd")
 const HudScript = preload("res://scripts/hud.gd")
 const PropsScript = preload("res://scripts/props.gd")
+const ArenasScript = preload("res://scripts/arenas.gd")
+const UI = preload("res://scripts/ui.gd")
 
 const ARENA: float = 24.0
 
@@ -23,7 +25,8 @@ var demo: bool = false       # fondo del menú: solo bots, sin HUD ni sonido
 var authority: bool = true   # esta PC decide (host, o partida sola)
 var online: bool = false     # hay red de por medio
 
-var colors: Array = [Color("ff5a5f"), Color("3fa7ff"), Color("ffd23f"), Color("4cd964"), Color("b86bff"), Color("ff9f1c"), Color("2ee6c8"), Color("ff7ac8")]
+var colors: Array = UI.PLAYER_COLORS
+var arena: int = 0           # índice del campo (scripts/arenas.gd)
 
 var world: Node3D
 var match_state
@@ -74,11 +77,12 @@ func _ready() -> void:
 		var names: Array = Net.BOT_NAMES.duplicate()
 		names.shuffle()
 		for i in 6:
-			roster.append({"peer": 0, "name": names[i]})
+			roster.append({"peer": 0, "name": names[i], "char": randi() % 20})
 	var me: int = Net.my_id()
 	for i in roster.size():
 		var p = PlayerScript.new()
 		p.slot = i
+		p.char_index = int(roster[i].get("char", i))
 		p.game = self
 		p.match_state = match_state
 		p.color = colors[i % colors.size()]
@@ -152,37 +156,10 @@ func _build_world() -> void:
 	sun.light_energy = 0.95
 	add_child(sun)
 
-	var s: float = ARENA
-	# Piso y muros
-	# El último texto es la pieza de props.gd que viste la caja; el choque es siempre la caja.
-	_box(Vector3(0, -0.5, 0), Vector3(s * 2.0, 1.0, s * 2.0), Color("86c97a"))
-	_box(Vector3(s + 0.5, 3.0, 0), Vector3(1.0, 6.0, s * 2.0 + 2.0), Color("f0e2c4"), Vector3.ZERO, "wall")
-	_box(Vector3(-s - 0.5, 3.0, 0), Vector3(1.0, 6.0, s * 2.0 + 2.0), Color("f0e2c4"), Vector3.ZERO, "wall")
-	_box(Vector3(0, 3.0, s + 0.5), Vector3(s * 2.0 + 2.0, 6.0, 1.0), Color("ead9b6"), Vector3.ZERO, "wall")
-	_box(Vector3(0, 3.0, -s - 0.5), Vector3(s * 2.0 + 2.0, 6.0, 1.0), Color("ead9b6"), Vector3.ZERO, "wall")
-	# Tarima central de dos pisos, con rampas
-	_box(Vector3(0, 0.6, 0), Vector3(8.0, 1.2, 8.0), Color("ffd23f"), Vector3.ZERO, "stage")
-	_box(Vector3(0, 1.8, 0), Vector3(3.0, 1.2, 3.0), Color("ff5a5f"), Vector3.ZERO, "crate")
-	_box(Vector3(0, 0.45, 6.4), Vector3(3.0, 0.3, 5.0), Color("fdffb6"), Vector3(0.2425, 0, 0), "ramp")
-	_box(Vector3(0, 0.45, -6.4), Vector3(3.0, 0.3, 5.0), Color("fdffb6"), Vector3(-0.2425, 0, 0), "ramp")
-	# Coberturas altas
-	for sx in [-1.0, 1.0]:
-		for sz in [-1.0, 1.0]:
-			_box(Vector3(13.0 * sx, 1.4, 13.0 * sz), Vector3(5.0, 2.8, 1.2), Color("b86bff"), Vector3(0, PI * 0.25 * sx * sz, 0), "fence")
-	# Bloques bajos para saltar
-	_box(Vector3(17.0, 0.6, 0), Vector3(3.0, 1.2, 3.0), Color("4cd964"), Vector3.ZERO, "tires")
-	_box(Vector3(-17.0, 0.6, 0), Vector3(3.0, 1.2, 3.0), Color("4cd964"), Vector3.ZERO, "tires")
-	_box(Vector3(0, 0.6, 17.0), Vector3(3.0, 1.2, 3.0), Color("3fa7ff"), Vector3.ZERO, "tires")
-	_box(Vector3(0, 0.6, -17.0), Vector3(3.0, 1.2, 3.0), Color("3fa7ff"), Vector3.ZERO, "tires")
-	# Torres en dos esquinas: se sube con el trampolín de al lado
-	_box(Vector3(20.0, 2.0, -20.0), Vector3(5.0, 4.0, 5.0), Color("e4572e"), Vector3.ZERO, "container")
-	_box(Vector3(-20.0, 2.0, 20.0), Vector3(5.0, 4.0, 5.0), Color("e4572e"), Vector3.ZERO, "container")
-	world.add_child(PropsScript.scenery(s))
-	# Trampolines
-	_pad(Vector3(15.5, 0.0, -15.5))
-	_pad(Vector3(-15.5, 0.0, 15.5))
-	_pad(Vector3(9.0, 0.0, 9.0))
-	_pad(Vector3(-9.0, 0.0, -9.0))
+	# El campo: cajas de choque, piezas que las visten y trampolines (scripts/arenas.gd).
+	arena = (randi() % ArenasScript.count()) if demo else Net.arena_now
+	ArenasScript.build(arena, self)
+	world.add_child(PropsScript.scenery(ARENA))
 
 	for i in 8:
 		var ang: float = TAU * float(i) / 8.0 + PI / 8.0
@@ -258,8 +235,8 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and human != null and not menu_open:
 			var mm := event as InputEventMouseMotion
-			var sens: float = Tuning.mouse_sens
-			if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and human.is_bearer:
+			var sens: float = Tuning.mouse_sens * Settings.sens
+			if Input.is_action_pressed("gb_aim") and human.is_bearer:
 				sens *= 0.6
 			human.yaw -= mm.relative.x * sens
 			human.pitch = clampf(human.pitch - mm.relative.y * sens, -1.2, 1.0)
@@ -275,6 +252,9 @@ func _input(event: InputEvent) -> void:
 		elif k.physical_keycode == KEY_ENTER or k.physical_keycode == KEY_KP_ENTER:
 			if match_state.is_ended() and authority:
 				Net.start_match()
+		elif k.physical_keycode == KEY_B:
+			if match_state.is_ended() and authority and online:
+				Net.back_to_lobby()
 
 
 func _toggle_menu() -> void:
@@ -356,7 +336,7 @@ func _process(delta: float) -> void:
 		var eye: Vector3 = bp.global_position + bp.forward() * 3.2 + bp.right() * 1.6 + Vector3(0, 1.7, 0)
 		cam.look_at_from_position(eye, bp.global_position + Vector3(0, 1.0, 0), Vector3.UP)
 		return
-	var aiming: bool = Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and human.is_bearer and human.alive and not menu_open
+	var aiming: bool = Input.is_action_pressed("gb_aim") and human.is_bearer and human.alive and not menu_open
 	var k: float = 1.0 - exp(-12.0 * delta)
 	_cam_dist = lerpf(_cam_dist, 2.6 if aiming else 4.4, k)
 	cam.fov = lerpf(cam.fov, 52.0 if aiming else 78.0, k)
@@ -435,6 +415,7 @@ func _spawn_ball(id: int, shooter, origin: Vector3, dir: Vector3) -> void:
 	ball.setup(self, id, shooter, origin, dir)
 	world.add_child(ball)
 	balls[id] = ball
+	shooter.stat_shots += 1
 	if shooter == human:
 		Sfx.play("shoot", randf_range(0.95, 1.1))
 		_shake = maxf(_shake, 0.25)
@@ -615,6 +596,9 @@ func on_match_ended() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	hud.show_end()
 	Net.tlog("fin, puntos %s" % str(match_state.scores()))
+	if authority and Net.test.has("backlobby"):
+		Net.test.erase("backlobby")
+		get_tree().create_timer(3.0).timeout.connect(Net.back_to_lobby)
 	if authority and Net.test.has("rematch"):
 		Net.test.erase("rematch")
 		get_tree().create_timer(3.0).timeout.connect(Net.start_match)

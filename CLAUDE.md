@@ -51,13 +51,16 @@ El 12 de noviembre de 2026 Jorge dijo que quiere que Gunbearer se convierta en u
 ## Estructura
 
 ```
-project.godot          Autoloads: Tuning, Sfx, Net. Ventana 1280x720.
+project.godot          Autoloads: Tuning, Sfx, Settings, Net. Ventana 1280x720.
 scenes/menu.tscn       Nodo raíz "Menu" con scripts/menu.gd
 scenes/main.tscn       Nodo raíz "Main" (Node3D) con scripts/main.gd  -> la partida
 autoload/tuning.gd     TODOS los números del juego y los presets de dificultad
 autoload/sfx.gd        Sonidos generados por código (no hay archivos de audio)
+autoload/settings.gd   Opciones: controles reasignables (acciones gb_*), sensibilidad, volumen, pantalla completa
 autoload/net.gd        Red: ENet, sala de espera, búsqueda UDP y todos los RPC
-scripts/menu.gd        Menú principal y sala de espera (UI por código)
+scripts/ui.gd          Estilo único de la interfaz: colores, tamaños, botones, paneles
+scripts/arenas.gd      Los campos de juego (El Parque, El Muelle, La Torre)
+scripts/menu.gd        Menú, perfil del jugador, sala de espera, opciones y créditos (UI por código)
 scripts/main.gd        La partida: arena, jugadores, cámara, eventos, efectos
 scripts/match.gd       Estado de la partida: portador, puntos, tiempo, robos, impactos
 scripts/player.gd      Un jugador (humano local, remoto o bot)
@@ -89,6 +92,18 @@ scripts/hud.gd         Interfaz de la partida (CanvasLayer por código)
 - `PropsScript.scenery()` pone las marcas del suelo, los focos y los árboles de fuera. No tienen choque y nada de adorno va dentro de la zona de juego.
 - Las piezas comparten mallas y materiales y no proyectan sombra. Medido en la PC de Jorge (Intel Iris Xe, 1280×720): unos 350 dibujos por cuadro y entre 70 y 115 fps.
 - `--showcam=top` da una vista general de la arena para las capturas.
+
+### Interfaz, perfil, controles y campos
+
+- **Un solo estilo:** todo color, tamaño de letra, botón o panel sale de `scripts/ui.gd`. No se ponen colores ni tamaños sueltos en las pantallas. Jorge pidió que la interfaz sea coherente y cuidada en el detalle.
+- **Perfil:** `Net.my_name` y `Net.my_char` (índice de personaje). Viajan en `c_hello` y quedan en cada entrada de `Net.roster` como `"char"`. Dos jugadores pueden llevar el mismo personaje (decisión de Jorge). Los bots reciben personajes que nadie eligió.
+- **Controles:** el juego nunca pregunta por una tecla, sino por una acción (`Input.is_action_pressed("gb_jump")`). Las acciones y sus teclas de fábrica están en `Settings.ACTIONS`. Los textos que nombran teclas usan `Settings.key_name()`. Esc, Q, Enter y B son fijas.
+- **Campos:** `Net.arena` es lo elegido en el menú (-1 = aleatorio) y `Net.arena_now` el de la partida en curso, que viaja en `s_start`. Las reglas para que un campo sea justo están al principio de `scripts/arenas.gd`.
+- **Volver a la sala:** al terminar, el host pulsa B y `Net.back_to_lobby()` (RPC `s_back`) manda a todos al menú con la conexión abierta; `menu.gd` muestra la sala si `Net.mode` es host o client. Ahí puede entrar gente nueva.
+- **Estadísticas:** `stat_steals`, `stat_shots`, `stat_best_streak` y `stat_time` en cada jugador; cada PC las cuenta con los eventos que recibe.
+- **settings.cfg** lo escriben `Net.save_cfg` y `Settings.save`; los dos cargan el archivo antes de guardar para no pisarse.
+- Atajos de prueba nuevos: `--screen=options|credits|solo` abre esa pantalla, `--char=N`, `--arena=N`, `--backlobby`, `--shot-at=S`.
+- **Créditos** (pantalla del menú y README): dirección y programación, Jorge Ricardo Cintra Rad; arte, Jesús Luis Pérez Martínez; personajes, Kenney (CC0); motor, Godot.
 
 ## Arquitectura
 
@@ -126,7 +141,7 @@ Quien manda llama a `main.emit_event(kind, args)`: lo aplica en local con `apply
 
 Todos los RPC viven en el autoload `Net`, **no** en los nodos de la partida, a propósito: así nunca llegan a un nodo que todavía no existe en otra PC. `Net` los reenvía a `Net.game` si hay partida cargada.
 
-- Sala: `c_hello` (cliente → host), `s_lobby`, `s_reject`, `s_start` (host → todos), `c_ready` (cliente → host al cargar la escena).
+- Sala: `c_hello` (cliente → host), `s_lobby`, `s_reject`, `s_start`, `s_back` (host → todos), `c_ready` (cliente → host al cargar la escena).
 - Partida: `x_state` (posición, 30 Hz, sin garantía), `c_shoot` (cliente pide disparar), `s_event` (eventos, fiable), `s_sync` (estado, tiempo y puntos 4 veces por segundo, para corregir desfases).
 - Puertos: **24570** ENet (juego), **24571** UDP (el host anuncia la partida cada segundo; los clientes escuchan).
 - El host espera a que todos manden `c_ready` (o 8 s) antes de `EV_START`.
@@ -178,10 +193,10 @@ Host y cliente en `127.0.0.1`, 0 errores en ambas consolas, eventos y puntos id�
 ## Qué sigue, en orden
 
 1. Que Jorge juegue la red a mano (dos ventanas, y mejor aún dos PC) y arreglar lo que note.
-2. Interfaces: menú con más presencia, HUD más legible y pantalla final con estadísticas (robos, puntería, racha, tiempo con el Lanzador).
-3. Arte, lo que queda: una segunda arena simétrica con otro tema y selector en el menú; accesorios de personaje (el pack de Kenney trae gafas, gafas de sol y mascarilla; el resto se haría por código). Los cuerpos ya están (Kenney, CC0); no se usa Mixamo porque su licencia no deja subir los archivos a un repo público.
+2. Interfaz, lo que queda: el HUD de la partida (marcador, avisos, munición) todavía no usa `ui.gd`; y las opciones no se pueden abrir desde la pausa, solo desde el menú principal.
+3. Arte, lo que queda: accesorios de personaje (el pack de Kenney trae gafas, gafas de sol y mascarilla; el resto se haría por código) y un Lanzador propio.
 4. Revisar el azar con ojo competitivo: primer portador y puntos de reaparición.
-5. Exportar a `.exe` para pasárselo a los amigos, y que quien llegue tarde pueda entrar en la ronda siguiente.
+5. Exportar a `.exe` para pasárselo a los amigos.
 6. Para después: power-ups, más arenas, mandos, online por internet.
 
 ## Estilo de código

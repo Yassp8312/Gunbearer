@@ -9,6 +9,11 @@ var game = null
 var match_state = null
 var brain = null
 var slot: int = 0
+var char_index: int = 0     # qué personaje lleva (scripts/character.gd)
+var stat_steals: int = 0    # estadísticas de la partida, para la pantalla final
+var stat_shots: int = 0
+var stat_best_streak: int = 0
+var stat_time: float = 0.0  # segundos con el Lanzador
 var peer_id: int = 0
 var is_local: bool = true
 var display_name: String = "Jugador"
@@ -78,7 +83,7 @@ func _ready() -> void:
 
 	# Cuerpo: un modelo animado. Si no está el archivo, queda la cápsula de siempre.
 	_char = CharacterScript.new()
-	if _char.setup(CharacterScript.DEFAULT_PACK, slot, color):
+	if _char.setup(CharacterScript.DEFAULT_PACK, char_index, color):
 		_char.position = Vector3(0, -0.9, 0)
 		_visual.add_child(_char)
 	else:
@@ -354,19 +359,19 @@ func _read_human() -> void:
 		return
 	var f: float = 0.0
 	var r: float = 0.0
-	if Input.is_physical_key_pressed(KEY_W):
+	if Input.is_action_pressed("gb_forward"):
 		f += 1.0
-	if Input.is_physical_key_pressed(KEY_S):
+	if Input.is_action_pressed("gb_back"):
 		f -= 1.0
-	if Input.is_physical_key_pressed(KEY_D):
+	if Input.is_action_pressed("gb_right"):
 		r += 1.0
-	if Input.is_physical_key_pressed(KEY_A):
+	if Input.is_action_pressed("gb_left"):
 		r -= 1.0
 	in_move = forward() * f + right() * r
-	in_jump = Input.is_physical_key_pressed(KEY_SPACE)
-	in_dash = Input.is_physical_key_pressed(KEY_SHIFT)
-	in_reload = Input.is_physical_key_pressed(KEY_R)
-	in_shoot = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	in_jump = Input.is_action_pressed("gb_jump")
+	in_dash = Input.is_action_pressed("gb_dash")
+	in_reload = Input.is_action_pressed("gb_reload")
+	in_shoot = Input.is_action_pressed("gb_shoot") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 
 
 func _weapon(delta: float) -> void:

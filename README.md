@@ -23,6 +23,8 @@ Segundo juego de la serie de Yassper Design (después de MAAI). Hecho en Godot 4
 | Pausa / menú | Esc |
 | Salir al menú (con el menú abierto) | Q |
 
+Son los controles de fábrica: se pueden cambiar en **Opciones**, junto con la sensibilidad del mouse, el volumen y la pantalla completa.
+
 ## Estado
 - [x] Hito 1: moverse, cámara, dash, Lanzador y bolas
 - [x] Hito 2: reglas (robo, inmunidad, aturdimiento, puntos, tiempo, reapariciones, HUD)
@@ -30,7 +32,8 @@ Segundo juego de la serie de Yassper Design (después de MAAI). Hecho en Godot 4
 - [x] Menú principal: contra bots (cantidad y dificultad), crear partida, unirse
 - [x] Hito 3: red local (2 a 8 jugadores, puerto 24570; búsqueda de partidas por UDP 24571)
 - [x] Hito 5: pulido (partículas, estela del dash, rachas, trampolines)
-- [ ] Hito 6: arte (cuerpo base y accesorios)
+- [x] Hito 6: arte (personajes animados y campos vestidos)
+- [x] Perfil del jugador (nombre y personaje), sala de espera en lista, tres campos, controles configurables y estadísticas al final
 
 Todos los números del juego están en `autoload/tuning.gd`.
 
@@ -38,7 +41,14 @@ Todos los números del juego están en `autoload/tuning.gd`.
 - Uno le da a **Crear partida en red local** y los demás a **Unirse a una partida**. Todos en el mismo wifi.
 - El host decide los toques, los impactos y los puntos. Cada jugador mueve su propio muñeco.
 - Si alguien se va a mitad de partida, un bot ocupa su lugar.
+- Al terminar, el host puede lanzar otra ronda o volver a la sala, donde puede entrar gente nueva.
 - La primera vez, Windows pregunta si deja pasar a Godot por el firewall: hay que decir que sí.
+
+## Créditos
+- **Dirección y programación:** Jorge Ricardo Cintra Rad
+- **Arte:** Jesús Luis Pérez Martínez
+- **Personajes y objetos:** [Mini Characters](https://kenney.nl/assets/mini-characters), de Kenney, con licencia Creative Commons CC0
+- **Motor:** [Godot Engine](https://godotengine.org/)
 
 ---
 <sub>[Jorge Coffee](https://jorge-coffee.onrender.com/)</sub>

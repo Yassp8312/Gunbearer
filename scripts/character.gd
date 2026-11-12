@@ -32,7 +32,21 @@ const PACKS: Dictionary = {
 	},
 }
 
+# Nombre de cada personaje, en el mismo orden que "models" del pack por defecto.
+const NAMES: Array = [
+	"Leo", "Mara", "Alienígena", "Robot", "Caballero", "Zombi", "Obrero", "Saqueador",
+	"Beto", "Nina", "Soldado", "Coco", "Lola", "Dani", "Vera", "Edu", "Sol", "Fito", "Gala", "Gus",
+]
+
 var armed: bool = false     # lleva el Lanzador: el brazo apunta
+
+
+static func count() -> int:
+	return NAMES.size()
+
+
+static func name_of(i: int) -> String:
+	return str(NAMES[posmod(i, NAMES.size())])
 
 var _pack: Dictionary = {}
 var _anim: AnimationPlayer = null

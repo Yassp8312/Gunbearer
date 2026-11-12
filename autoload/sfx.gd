@@ -25,6 +25,9 @@ func _ready() -> void:
 	_streams["end"] = _make(0.60, 800.0, 300.0, 0.0, 0.5)
 	_streams["bounce"] = _make(0.22, 180.0, 620.0, 0.0, 0.45)
 	_streams["streak"] = _make(0.30, 520.0, 1040.0, 0.0, 0.5)
+	_streams["ui_hover"] = _make(0.04, 900.0, 1100.0, 0.0, 0.12)
+	_streams["ui_click"] = _make(0.08, 620.0, 980.0, 0.0, 0.3)
+	_streams["ui_back"] = _make(0.08, 700.0, 420.0, 0.0, 0.25)
 
 
 func _make(dur: float, f0: float, f1: float, noise: float, vol: float) -> AudioStreamWAV:
@@ -46,6 +49,14 @@ func _make(dur: float, f0: float, f1: float, noise: float, vol: float) -> AudioS
 	w.stereo = false
 	w.data = data
 	return w
+
+
+# Sonidos de interfaz: suenan aunque la partida de fondo del menú esté en silencio.
+func play_ui(id: String) -> void:
+	var was: bool = muted
+	muted = false
+	play(id)
+	muted = was
 
 
 func play(id: String, pitch: float = 1.0, volume_db: float = 0.0) -> void:

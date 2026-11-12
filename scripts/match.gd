@@ -50,6 +50,10 @@ func begin(first) -> void:
 	state = COUNTDOWN
 	for p in players:
 		p.score = 0
+		p.stat_steals = 0
+		p.stat_shots = 0
+		p.stat_best_streak = 0
+		p.stat_time = 0.0
 	apply_give(first, null)
 
 
@@ -63,6 +67,7 @@ func apply_give(to, from) -> void:
 	to.fire_timer = 0.3
 	to.streak = 0
 	if from != null:
+		to.stat_steals += 1
 		from.stun_timer = Tuning.steal_stun
 		from.streak = 0
 		feed.emit("%s le robó el Lanzador a %s" % [to.display_name, from.display_name], to.color)
@@ -73,6 +78,7 @@ func apply_give(to, from) -> void:
 func apply_elim(victim, shooter, dir: Vector3) -> void:
 	shooter.score += 1
 	shooter.streak += 1
+	shooter.stat_best_streak = maxi(shooter.stat_best_streak, shooter.streak)
 	feed.emit("%s pintó a %s" % [shooter.display_name, victim.display_name], shooter.color)
 	victim.eliminate(dir, shooter.color)
 	Sfx.play("hit", randf_range(0.9, 1.1))
@@ -117,6 +123,8 @@ func _physics_process(delta: float) -> void:
 			_go()
 	elif state == PLAYING:
 		time_left = maxf(0.0, time_left - delta)
+		if bearer != null:
+			bearer.stat_time += delta
 		if game.authority:
 			if time_left <= 0.0:
 				game.host_end()

@@ -10,12 +10,17 @@ signal net_error(text: String)
 const PORT: int = 24570
 const DISCOVERY_PORT: int = 24571
 const MAX_PLAYERS: int = 8
+const ArenasScript = preload("res://scripts/arenas.gd")
+const CharacterScript = preload("res://scripts/character.gd")
 const BOT_NAMES: Array = ["Cuco", "Yusimí", "El Brayan", "Tata", "Machito", "La Flaca", "Pipo", "Yunior"]
 
 var mode: String = "solo"  # solo, host, client
 var my_name: String = "Jugador"
 var bot_count: int = 5
 var difficulty: int = 1
+var my_char: int = 0       # personaje elegido (scripts/character.gd)
+var arena: int = -1         # campo elegido en el menú; -1 = aleatorio
+var arena_now: int = 0      # campo de la partida en curso
 var roster: Array = []
 var lobby_players: Array = []
 var game = null
@@ -39,6 +44,7 @@ var test: Dictionary = {}
 #   --host[=N]        crea la partida y arranca sola al haber N humanos (2 si no se dice)
 #   --join[=IP|auto]  se une a esa IP (127.0.0.1 si no se dice); "auto" usa la búsqueda
 #   --name=X          nombre del jugador        --bots=N       bots de relleno
+#   --char=N          personaje (0 a 19)        --arena=N      campo (0, 1, 2; -1 al azar)
 #   --match=SEG       duración de la partida    --autopilot    tu muñeco lo lleva un bot
 #   --netlog          imprime los eventos       --rematch      el host lanza otra ronda al acabar
 #   --leave-after=S   sale al menú a los S s    --quit-after=S cierra el juego a los S s
@@ -51,6 +57,10 @@ func _read_test_args() -> void:
 		test[kv[0]] = kv[1] if kv.size() > 1 else ""
 	if test.has("name"):
 		my_name = str(test["name"])
+	if test.has("char"):
+		my_char = posmod(int(test["char"]), CharacterScript.count())
+	if test.has("arena"):
+		arena = clampi(int(test["arena"]), -1, ArenasScript.count() - 1)
 	if test.has("bots"):
 		bot_count = clampi(int(test["bots"]), 0, 7)
 	if test.has("match"):
@@ -63,10 +73,10 @@ func _read_test_args() -> void:
 		get_tree().create_timer(float(test["leave-after"])).timeout.connect(_leave_now)
 
 
-	# --shot=RUTA guarda capturas de pantalla (RUTA_1.png, _2, _3) a los 7, 10 y 13 s.
+	# --shot=RUTA guarda capturas (RUTA_1.png, _2, _3) a los 7, 10 y 13 s; --shot-at=S cambia el primer momento.
 	if test.has("shot"):
 		for i in 3:
-			get_tree().create_timer(7.0 + 3.0 * i).timeout.connect(_shot.bind(i + 1))
+			get_tree().create_timer(float(test.get("shot-at", "7")) + 3.0 * i).timeout.connect(_shot.bind(i + 1))
 
 
 func _shot(n: int) -> void:
@@ -108,6 +118,8 @@ func _ready() -> void:
 		my_name = str(cf.get_value("player", "name", my_name))
 		bot_count = clampi(int(cf.get_value("game", "bots", bot_count)), 0, 7)
 		difficulty = clampi(int(cf.get_value("game", "difficulty", difficulty)), 0, 2)
+		my_char = posmod(int(cf.get_value("player", "char", my_char)), CharacterScript.count())
+		arena = clampi(int(cf.get_value("game", "arena", arena)), -1, ArenasScript.count() - 1)
 	_read_test_args()
 
 
@@ -115,7 +127,10 @@ func save_cfg() -> void:
 	if not test.is_empty():
 		return  # una prueba no debe pisar tu configuración
 	var cf := ConfigFile.new()
+	cf.load("user://settings.cfg")  # conserva lo que guarda Settings
 	cf.set_value("player", "name", my_name)
+	cf.set_value("player", "char", my_char)
+	cf.set_value("game", "arena", arena)
 	cf.set_value("game", "bots", bot_count)
 	cf.set_value("game", "difficulty", difficulty)
 	cf.save("user://settings.cfg")
@@ -153,7 +168,7 @@ func host_game() -> bool:
 		return false
 	multiplayer.multiplayer_peer = peer
 	mode = "host"
-	lobby_players = [{"peer": 1, "name": my_name}]
+	lobby_players = [{"peer": 1, "name": my_name, "char": my_char}]
 	_session_id = randi()
 	_udp_out = PacketPeerUDP.new()
 	_udp_out.set_broadcast_enabled(true)
@@ -204,7 +219,7 @@ func _on_peer_disconnected(id: int) -> void:
 
 
 func _on_connected() -> void:
-	c_hello.rpc_id(1, my_name)
+	c_hello.rpc_id(1, my_name, my_char)
 
 
 func _on_connection_failed() -> void:
@@ -300,12 +315,12 @@ func _process(delta: float) -> void:
 
 func push_lobby() -> void:
 	if mode == "host":
-		s_lobby.rpc(lobby_players, bot_count, difficulty)
+		s_lobby.rpc(lobby_players, bot_count, difficulty, arena)
 	lobby_changed.emit()
 
 
 @rpc("any_peer", "call_remote", "reliable")
-func c_hello(pname: String) -> void:
+func c_hello(pname: String, char_idx: int) -> void:
 	if mode != "host":
 		return
 	var id: int = multiplayer.get_remote_sender_id()
@@ -315,13 +330,14 @@ func c_hello(pname: String) -> void:
 	var clean: String = pname.strip_edges().substr(0, 14)
 	if clean == "":
 		clean = "Jugador"
-	lobby_players.append({"peer": id, "name": clean})
+	lobby_players.append({"peer": id, "name": clean, "char": posmod(char_idx, CharacterScript.count())})
 	push_lobby()
 
 
 @rpc("authority", "call_remote", "reliable")
-func s_lobby(players: Array, bots: int, diff: int) -> void:
+func s_lobby(players: Array, bots: int, diff: int, arena_choice: int) -> void:
 	lobby_players = players
+	arena = arena_choice
 	bot_count = bots
 	difficulty = diff
 	lobby_changed.emit()
@@ -340,28 +356,55 @@ func start_match() -> void:
 	roster = []
 	if mode == "host":
 		for p in lobby_players:
-			roster.append({"peer": int(p["peer"]), "name": str(p["name"])})
+			roster.append({"peer": int(p["peer"]), "name": str(p["name"]), "char": int(p.get("char", 0))})
 	else:
-		roster.append({"peer": 1, "name": "Tú"})
+		roster.append({"peer": 1, "name": my_name, "char": my_char})
 	var bots: int = clampi(bot_count, 0, MAX_PLAYERS - roster.size())
 	if roster.size() + bots < 2:
 		bots = 2 - roster.size()
 	var names: Array = BOT_NAMES.duplicate()
 	names.shuffle()
+	# Los bots llevan personajes que no haya elegido nadie.
+	var free_chars: Array = []
+	for c in CharacterScript.count():
+		free_chars.append(c)
+	for p in roster:
+		free_chars.erase(int(p["char"]))
+	free_chars.shuffle()
 	for i in bots:
-		roster.append({"peer": 0, "name": names[i]})
+		roster.append({"peer": 0, "name": names[i], "char": free_chars[i % free_chars.size()]})
+	arena_now = arena if arena >= 0 else randi() % ArenasScript.count()
 	_ready_peers.clear()
 	save_cfg()
 	if mode == "host":
-		s_start.rpc(roster, difficulty)
+		s_start.rpc(roster, difficulty, arena_now)
 	_load_game()
 
 
 @rpc("authority", "call_remote", "reliable")
-func s_start(r: Array, diff: int) -> void:
+func s_start(r: Array, diff: int, arena_idx: int) -> void:
 	roster = r
+	arena_now = arena_idx
 	difficulty = diff
 	_load_game()
+
+
+# Fin de partida: el host devuelve a todos a la sala, donde puede entrar gente nueva.
+func back_to_lobby() -> void:
+	if mode != "host":
+		return
+	s_back.rpc()
+	_to_lobby()
+
+
+@rpc("authority", "call_remote", "reliable")
+func s_back() -> void:
+	_to_lobby()
+
+
+func _to_lobby() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/menu.tscn")
 
 
 func _load_game() -> void:

@@ -19,6 +19,7 @@ config/features=PackedStringArray("4.5", "Forward Plus")
 
 Tuning="*res://autoload/tuning.gd"
 Sfx="*res://autoload/sfx.gd"
+Settings="*res://autoload/settings.gd"
 Net="*res://autoload/net.gd"
 
 [display]
