@@ -62,6 +62,7 @@ scripts/main.gd        La partida: arena, jugadores, cámara, eventos, efectos
 scripts/match.gd       Estado de la partida: portador, puntos, tiempo, robos, impactos
 scripts/player.gd      Un jugador (humano local, remoto o bot)
 scripts/character.gd   Cuerpo visible del jugador: modelo, animaciones, tinte, Lanzador
+scripts/props.gd       Piezas que visten la arena (vallas, neumáticos, contenedores...), por código
 assets/kenney_mini/    Personajes y objetos "Mini Characters" de Kenney (CC0)
 assets/_zips/          Descargas originales. Fuera de git y de Godot (.gdignore)
 scripts/bot.gd         Cerebro de un bot (RefCounted)
@@ -79,6 +80,15 @@ scripts/hud.gd         Interfaz de la partida (CanvasLayer por código)
 - El portador lleva el brazo derecho en la pose de `holding-right` mientras el resto del cuerpo sigue su animación (se impone tras cada paso con `mixer_applied`).
 - Se descartó la Universal Animation Library de Quaternius: su versión gratuita solo corre hacia adelante y el maniquí no pega con el tono.
 - Para revisar el arte sin jugar: `--showcam` (cámara frente al portador) y `--shot=RUTA` (guarda capturas a los 7, 10 y 13 s). Con `--autopilot` no se captura el mouse.
+
+### Arte de la arena
+
+- Tema: parque de paintball de juguete. **Todo se hace por código con formas simples** en `props.gd`: las herramientas de IA para generar 3D no dejan descargar sin pagar, así que Jorge no va a traer modelos.
+- `main._box(pos, tamaño, color, rotación, pieza)` crea la caja de choque; si se le pasa una pieza (`"fence"`, `"tires"`, `"container"`, `"stage"`, `"crate"`, `"ramp"`, `"wall"`), `props.gd` dibuja el adorno encima y la caja queda solo para dar sombra. **El choque es siempre la caja**: ninguna pieza cambia por dónde se pasa ni dónde pega una bola.
+- El color que se pasa es el acento de la zona (tapa de la valla, neumático de arriba), para orientarse en el mapa.
+- `PropsScript.scenery()` pone las marcas del suelo, los focos y los árboles de fuera. No tienen choque y nada de adorno va dentro de la zona de juego.
+- Las piezas comparten mallas y materiales y no proyectan sombra. Medido en la PC de Jorge (Intel Iris Xe, 1280×720): unos 350 dibujos por cuadro y entre 70 y 115 fps.
+- `--showcam=top` da una vista general de la arena para las capturas.
 
 ## Arquitectura
 
@@ -168,9 +178,11 @@ Host y cliente en `127.0.0.1`, 0 errores en ambas consolas, eventos y puntos id�
 ## Qué sigue, en orden
 
 1. Que Jorge juegue la red a mano (dos ventanas, y mejor aún dos PC) y arreglar lo que note.
-2. Arte, lo que queda: accesorios (sombreros, gafas, mochilas) que Jorge genera con IA en GLB y se enganchan a los huesos `head` y `torso`; un Lanzador propio si quiere cambiar el de Kenney; y después vestir la arena. Los cuerpos ya están (Kenney, CC0); no se usa Mixamo porque su licencia no deja subir los archivos a un repo público.
-3. Exportar a `.exe` para pasárselo a los amigos, y que quien llegue tarde pueda entrar en la ronda siguiente.
-4. Para después: power-ups, más arenas, mandos, online por internet.
+2. Interfaces: menú con más presencia, HUD más legible y pantalla final con estadísticas (robos, puntería, racha, tiempo con el Lanzador).
+3. Arte, lo que queda: una segunda arena simétrica con otro tema y selector en el menú; accesorios de personaje (el pack de Kenney trae gafas, gafas de sol y mascarilla; el resto se haría por código). Los cuerpos ya están (Kenney, CC0); no se usa Mixamo porque su licencia no deja subir los archivos a un repo público.
+4. Revisar el azar con ojo competitivo: primer portador y puntos de reaparición.
+5. Exportar a `.exe` para pasárselo a los amigos, y que quien llegue tarde pueda entrar en la ronda siguiente.
+6. Para después: power-ups, más arenas, mandos, online por internet.
 
 ## Estilo de código
 

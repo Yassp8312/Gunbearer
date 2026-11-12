@@ -71,6 +71,7 @@ func _read_test_args() -> void:
 
 func _shot(n: int) -> void:
 	get_viewport().get_texture().get_image().save_png("%s_%d.png" % [str(test["shot"]), n])
+	print("captura %d: %d fps, %d dibujos por cuadro" % [n, Engine.get_frames_per_second(), Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)])
 
 
 func _leave_now() -> void:

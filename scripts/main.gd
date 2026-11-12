@@ -7,6 +7,7 @@ const BotScript = preload("res://scripts/bot.gd")
 const BallScript = preload("res://scripts/ball.gd")
 const MatchScript = preload("res://scripts/match.gd")
 const HudScript = preload("res://scripts/hud.gd")
+const PropsScript = preload("res://scripts/props.gd")
 
 const ARENA: float = 24.0
 
@@ -153,28 +154,30 @@ func _build_world() -> void:
 
 	var s: float = ARENA
 	# Piso y muros
-	_box(Vector3(0, -0.5, 0), Vector3(s * 2.0, 1.0, s * 2.0), Color("aebbd0"))
-	_box(Vector3(s + 0.5, 3.0, 0), Vector3(1.0, 6.0, s * 2.0 + 2.0), Color("8ecae6"))
-	_box(Vector3(-s - 0.5, 3.0, 0), Vector3(1.0, 6.0, s * 2.0 + 2.0), Color("8ecae6"))
-	_box(Vector3(0, 3.0, s + 0.5), Vector3(s * 2.0 + 2.0, 6.0, 1.0), Color("a2d2ff"))
-	_box(Vector3(0, 3.0, -s - 0.5), Vector3(s * 2.0 + 2.0, 6.0, 1.0), Color("a2d2ff"))
+	# El último texto es la pieza de props.gd que viste la caja; el choque es siempre la caja.
+	_box(Vector3(0, -0.5, 0), Vector3(s * 2.0, 1.0, s * 2.0), Color("86c97a"))
+	_box(Vector3(s + 0.5, 3.0, 0), Vector3(1.0, 6.0, s * 2.0 + 2.0), Color("f0e2c4"), Vector3.ZERO, "wall")
+	_box(Vector3(-s - 0.5, 3.0, 0), Vector3(1.0, 6.0, s * 2.0 + 2.0), Color("f0e2c4"), Vector3.ZERO, "wall")
+	_box(Vector3(0, 3.0, s + 0.5), Vector3(s * 2.0 + 2.0, 6.0, 1.0), Color("ead9b6"), Vector3.ZERO, "wall")
+	_box(Vector3(0, 3.0, -s - 0.5), Vector3(s * 2.0 + 2.0, 6.0, 1.0), Color("ead9b6"), Vector3.ZERO, "wall")
 	# Tarima central de dos pisos, con rampas
-	_box(Vector3(0, 0.6, 0), Vector3(8.0, 1.2, 8.0), Color("ffd6a5"))
-	_box(Vector3(0, 1.8, 0), Vector3(3.0, 1.2, 3.0), Color("ffadad"))
-	_box(Vector3(0, 0.45, 6.4), Vector3(3.0, 0.3, 5.0), Color("fdffb6"), Vector3(0.2425, 0, 0))
-	_box(Vector3(0, 0.45, -6.4), Vector3(3.0, 0.3, 5.0), Color("fdffb6"), Vector3(-0.2425, 0, 0))
+	_box(Vector3(0, 0.6, 0), Vector3(8.0, 1.2, 8.0), Color("ffd23f"), Vector3.ZERO, "stage")
+	_box(Vector3(0, 1.8, 0), Vector3(3.0, 1.2, 3.0), Color("ff5a5f"), Vector3.ZERO, "crate")
+	_box(Vector3(0, 0.45, 6.4), Vector3(3.0, 0.3, 5.0), Color("fdffb6"), Vector3(0.2425, 0, 0), "ramp")
+	_box(Vector3(0, 0.45, -6.4), Vector3(3.0, 0.3, 5.0), Color("fdffb6"), Vector3(-0.2425, 0, 0), "ramp")
 	# Coberturas altas
 	for sx in [-1.0, 1.0]:
 		for sz in [-1.0, 1.0]:
-			_box(Vector3(13.0 * sx, 1.4, 13.0 * sz), Vector3(5.0, 2.8, 1.2), Color("bdb2ff"), Vector3(0, PI * 0.25 * sx * sz, 0))
+			_box(Vector3(13.0 * sx, 1.4, 13.0 * sz), Vector3(5.0, 2.8, 1.2), Color("b86bff"), Vector3(0, PI * 0.25 * sx * sz, 0), "fence")
 	# Bloques bajos para saltar
-	_box(Vector3(17.0, 0.6, 0), Vector3(3.0, 1.2, 3.0), Color("caffbf"))
-	_box(Vector3(-17.0, 0.6, 0), Vector3(3.0, 1.2, 3.0), Color("caffbf"))
-	_box(Vector3(0, 0.6, 17.0), Vector3(3.0, 1.2, 3.0), Color("9bf6ff"))
-	_box(Vector3(0, 0.6, -17.0), Vector3(3.0, 1.2, 3.0), Color("9bf6ff"))
+	_box(Vector3(17.0, 0.6, 0), Vector3(3.0, 1.2, 3.0), Color("4cd964"), Vector3.ZERO, "tires")
+	_box(Vector3(-17.0, 0.6, 0), Vector3(3.0, 1.2, 3.0), Color("4cd964"), Vector3.ZERO, "tires")
+	_box(Vector3(0, 0.6, 17.0), Vector3(3.0, 1.2, 3.0), Color("3fa7ff"), Vector3.ZERO, "tires")
+	_box(Vector3(0, 0.6, -17.0), Vector3(3.0, 1.2, 3.0), Color("3fa7ff"), Vector3.ZERO, "tires")
 	# Torres en dos esquinas: se sube con el trampolín de al lado
-	_box(Vector3(20.0, 2.0, -20.0), Vector3(5.0, 4.0, 5.0), Color("ffc6ff"))
-	_box(Vector3(-20.0, 2.0, 20.0), Vector3(5.0, 4.0, 5.0), Color("ffc6ff"))
+	_box(Vector3(20.0, 2.0, -20.0), Vector3(5.0, 4.0, 5.0), Color("e4572e"), Vector3.ZERO, "container")
+	_box(Vector3(-20.0, 2.0, 20.0), Vector3(5.0, 4.0, 5.0), Color("e4572e"), Vector3.ZERO, "container")
+	world.add_child(PropsScript.scenery(s))
 	# Trampolines
 	_pad(Vector3(15.5, 0.0, -15.5))
 	_pad(Vector3(-15.5, 0.0, 15.5))
@@ -186,7 +189,7 @@ func _build_world() -> void:
 		spawns.append(Vector3(cos(ang) * 19.0, 0.1, sin(ang) * 19.0))
 
 
-func _box(pos: Vector3, size: Vector3, color: Color, rot: Vector3 = Vector3.ZERO) -> StaticBody3D:
+func _box(pos: Vector3, size: Vector3, color: Color, rot: Vector3 = Vector3.ZERO, skin: String = "") -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.collision_layer = 1
 	body.collision_mask = 0
@@ -199,6 +202,11 @@ func _box(pos: Vector3, size: Vector3, color: Color, rot: Vector3 = Vector3.ZERO
 	bm.material = mat
 	mesh.mesh = bm
 	body.add_child(mesh)
+	# Con pieza de adorno, la caja solo queda para dar sombra.
+	var deco: Node3D = PropsScript.make(skin, size, color, pos) if skin != "" else null
+	if deco != null:
+		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+		body.add_child(deco)
 	var cs := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = size
@@ -340,6 +348,9 @@ func _process(delta: float) -> void:
 	if human == null:
 		return
 	# Prueba: --showcam mira al portador de frente, para revisar el arte en capturas.
+	if str(Net.test.get("showcam", "")) == "top":
+		cam.look_at_from_position(Vector3(21.0, 13.0, 21.0), Vector3(-4.0, 0.0, -4.0), Vector3.UP)
+		return
 	if Net.test.has("showcam") and match_state.bearer != null:
 		var bp = match_state.bearer
 		var eye: Vector3 = bp.global_position + bp.forward() * 3.2 + bp.right() * 1.6 + Vector3(0, 1.7, 0)
