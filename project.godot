@@ -1,0 +1,25 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+
+config_version=5
+
+[application]
+
+config/name="Gunbearer"
+config/description="Solo uno tiene el arma, y tenerla te convierte en el blanco de todos."
+run/main_scene="res://scenes/menu.tscn"
+config/features=PackedStringArray("4.5", "Forward Plus")
+
+[autoload]
+
+Tuning="*res://autoload/tuning.gd"
+Sfx="*res://autoload/sfx.gd"
+Net="*res://autoload/net.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
