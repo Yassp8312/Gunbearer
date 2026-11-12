@@ -28,6 +28,62 @@ var _announce_t: float = 0.0
 var _session_id: int = 0
 var _ready_peers: Dictionary = {}
 
+# Atajos de prueba que llegan por línea de comandos (ver _read_test_args).
+var test: Dictionary = {}
+
+
+# Para probar la red sin tocar el menú. Van después de "--", por ejemplo:
+#   Godot.exe --path . -- --host --netlog --match=30
+#   Godot.exe --path . -- --join --autopilot --netlog
+#
+#   --host[=N]        crea la partida y arranca sola al haber N humanos (2 si no se dice)
+#   --join[=IP|auto]  se une a esa IP (127.0.0.1 si no se dice); "auto" usa la búsqueda
+#   --name=X          nombre del jugador        --bots=N       bots de relleno
+#   --match=SEG       duración de la partida    --autopilot    tu muñeco lo lleva un bot
+#   --netlog          imprime los eventos       --rematch      el host lanza otra ronda al acabar
+#   --leave-after=S   sale al menú a los S s    --quit-after=S cierra el juego a los S s
+func _read_test_args() -> void:
+	for a in OS.get_cmdline_user_args():
+		var s: String = a
+		if not s.begins_with("--"):
+			continue
+		var kv: PackedStringArray = s.substr(2).split("=", true, 1)
+		test[kv[0]] = kv[1] if kv.size() > 1 else ""
+	if test.has("name"):
+		my_name = str(test["name"])
+	if test.has("bots"):
+		bot_count = clampi(int(test["bots"]), 0, 7)
+	if test.has("match"):
+		Tuning.match_seconds = maxf(5.0, float(test["match"]))
+	if test.has("quit-after"):
+		get_tree().create_timer(float(test["quit-after"])).timeout.connect(_quit_now)
+
+
+	if test.has("leave-after"):
+		get_tree().create_timer(float(test["leave-after"])).timeout.connect(_leave_now)
+
+
+func _leave_now() -> void:
+	if game != null:
+		tlog("salgo al menú")
+		game._leave()
+
+
+func _quit_now() -> void:
+	close()
+	get_tree().quit()
+
+
+func tlog(text: String) -> void:
+	if test.has("netlog"):
+		print("[%s %s] %s" % [mode, my_name, text])
+
+
+# Al cerrar la ventana, avisa a los demás en vez de dejarlos esperando a que caduque la conexión.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		close()
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -41,9 +97,12 @@ func _ready() -> void:
 		my_name = str(cf.get_value("player", "name", my_name))
 		bot_count = clampi(int(cf.get_value("game", "bots", bot_count)), 0, 7)
 		difficulty = clampi(int(cf.get_value("game", "difficulty", difficulty)), 0, 2)
+	_read_test_args()
 
 
 func save_cfg() -> void:
+	if not test.is_empty():
+		return  # una prueba no debe pisar tu configuración
 	var cf := ConfigFile.new()
 	cf.set_value("player", "name", my_name)
 	cf.set_value("game", "bots", bot_count)

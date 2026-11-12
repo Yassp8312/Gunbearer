@@ -93,7 +93,7 @@ func apply_end(final_scores: Array) -> void:
 func apply_sync(s: int, cd: float, tl: float, bslot: int, sc: Array) -> void:
 	if state == ENDED:
 		return
-	if state == WAITING and s != WAITING and bslot >= 0 and bslot < players.size():
+	if state == WAITING and (s == COUNTDOWN or s == PLAYING) and bslot >= 0 and bslot < players.size():
 		begin(players[bslot])
 	if state == COUNTDOWN:
 		if s == PLAYING:

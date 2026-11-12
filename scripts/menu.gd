@@ -11,6 +11,8 @@ var _ip_edit: LineEdit = null
 var _players_label: Label = null
 var _info_label: Label = null
 var _games_box: VBoxContainer = null
+var _auto_host: int = 0
+var _auto_join: bool = false
 
 
 func _ready() -> void:
@@ -71,6 +73,23 @@ func _ready() -> void:
 		_msg = Net.last_error
 		Net.last_error = ""
 	_show("main")
+	_run_test_args()
+
+
+# Atajos de prueba (ver Net._read_test_args). Cada uno se usa una sola vez.
+func _run_test_args() -> void:
+	if Net.test.has("host"):
+		_auto_host = 2 if str(Net.test["host"]) == "" else maxi(1, int(Net.test["host"]))
+		Net.test.erase("host")
+		_host()
+	elif Net.test.has("join"):
+		var ip: String = str(Net.test["join"])
+		Net.test.erase("join")
+		if ip == "auto":
+			_auto_join = true
+			_open_join()
+		else:
+			_join(ip if ip != "" else "127.0.0.1")
 
 
 func _exit_tree() -> void:
@@ -255,6 +274,13 @@ func _build_client() -> void:
 
 
 func _refresh() -> void:
+	if _auto_host > 0 and Net.mode == "host" and Net.lobby_players.size() >= _auto_host:
+		_auto_host = 0
+		Net.start_match.call_deferred()
+	if _auto_join and not Net.found_games.is_empty():
+		_auto_join = false
+		Net.tlog("partida encontrada: %s" % str(Net.found_games.values()[0]))
+		_join.call_deferred(str(Net.found_games.values()[0]["ip"]))
 	if _players_label != null:
 		var t: String = ""
 		for p in Net.lobby_players:

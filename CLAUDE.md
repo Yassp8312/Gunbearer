@@ -33,6 +33,10 @@ Shooter de fiesta en 3D hecho en **Godot 4.5 (GDScript)**. Segundo juego de la s
 - Proyecto: esta carpeta (`project.godot`). Escena principal: `res://scenes/menu.tscn`.
 - Para probar la red en una sola PC hacen falta dos copias del juego: lánzalas por línea de comandos (`--path .`) o desde el editor con *Depurar → Personalizar instancias de ejecución* (2 instancias). El cliente se une con la IP `127.0.0.1`.
 - No hay tests automáticos. La verificación es correr el juego y mirar la consola.
+- **Prueba de red sin manos:** hay atajos de línea de comandos (van después de `--`, están documentados en `Net._read_test_args`). Con `--headless` no abre ventana ni captura el mouse. Ejemplo, en dos terminales:
+  - Host: `Godot_console.exe --headless --path . -- --host --name=Anfi --bots=2 --match=25 --autopilot --netlog --rematch --quit-after=75`
+  - Cliente: `Godot_console.exe --headless --path . -- --join=auto --name=Invi --autopilot --netlog --leave-after=45 --quit-after=65`
+  - `--netlog` imprime cada evento y las posiciones cada 5 s: los dos registros deben coincidir. Con atajos de prueba activos no se guarda `settings.cfg`.
 
 ## Estructura
 
@@ -116,17 +120,24 @@ Todos los RPC viven en el autoload `Net`, **no** en los nodos de la partida, a p
 - Pulido: salpicaduras, estela del dash, anillo al robar, rachas ("¡DOBLE!", "¡TRIPLE!", "¡IMPARABLE!"), cuatro trampolines y dos torres en la arena.
 - Una partida creada como host con bots de relleno arrancó y corrió.
 
-### Escrito pero SIN probar
+### Red: probada el 12 de noviembre de 2026 con dos copias en una PC (sin ventana, con pilotos automáticos)
 
-- **Un cliente unido a la partida.** Nunca se conectó una segunda copia del juego. Todo el camino del cliente está sin verificar: `c_hello`, sala, `s_start`, `c_ready`, sincronización de posiciones, disparo desde cliente (`c_shoot`), robos e impactos vistos desde el cliente.
-- Búsqueda automática de partidas por UDP.
-- Otra ronda con Enter en red (el host recarga la escena para todos).
-- Que un bot reemplace al que se desconecta (`EV_TAKEOVER`).
-- Salir al menú con Q: se pulsó una vez y no quedó claro que funcionara.
+Host y cliente en `127.0.0.1`, 0 errores en ambas consolas, eventos y puntos idénticos en los dos registros:
+
+- Búsqueda automática por UDP, sala, `s_start`, `c_ready`, posiciones sincronizadas.
+- Robo y disparo desde el cliente (`c_shoot`), impactos, reapariciones, fin de partida.
+- Otra ronda lanzada por el host.
+- Cliente que sale al menú o cierra el juego: lo reemplaza un bot (`EV_TAKEOVER`). Al cerrar la ventana, `Net` cierra la conexión para que el host se entere al instante.
+
+### Todavía SIN probar
+
+- **Jugar la red a mano, con ventanas**: cámara, HUD y sensación de retraso vistos desde el cliente.
+- **Dos PC distintas en la misma red** (firewall de Windows, búsqueda por broadcast real).
+- Las teclas Q y Enter pulsadas a mano (la salida y la otra ronda se probaron llamando al mismo código, no con el teclado).
 
 ### Detalles a tener en cuenta
 
-- Git: no estaba inicializado al escribir esto. Si sigue así, `git init` y primer commit antes de tocar nada. Ya hay `.gitignore`.
+- Git: inicializado, rama `main`, sin remoto todavía.
 - Los bots no usan malla de navegación: persiguen en línea recta y saltan o rodean cuando se atascan.
 - Dificultad normal: Jorge dijo que está "un poco difícil pero bien". No la bajes sin preguntar.
 - Si cambias `project.godot` con el editor abierto, Godot pregunta si recarga desde el disco: hay que decir que sí.
@@ -134,7 +145,7 @@ Todos los RPC viven en el autoload `Net`, **no** en los nodos de la partida, a p
 
 ## Qué sigue, en orden
 
-1. **Probar la red con dos instancias** y arreglar lo que falle. Es lo primero.
+1. Que Jorge juegue la red a mano (dos ventanas, y mejor aún dos PC) y arreglar lo que note.
 2. Subir el proyecto a GitHub como `Yassp8312/Gunbearer`.
 3. Arte: un solo cuerpo base con esqueleto y animaciones, y que los jugadores se diferencien por color y accesorios (sombreros, gafas, mochilas). Jorge quiere generar modelos con IA; la idea acordada es usar la IA para los accesorios y objetos sin animación, y Mixamo para el esqueleto del cuerpo base.
 4. Para después: power-ups, más arenas, mandos, online por internet.

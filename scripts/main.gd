@@ -42,6 +42,7 @@ var _cam_frac: float = 1.0
 var _pivot: Vector3 = Vector3.ZERO
 var _wait_t: float = 0.0
 var _demo_ang: float = 0.0
+var _log_t: float = 0.0
 
 
 func _ready() -> void:
@@ -93,6 +94,10 @@ func _ready() -> void:
 			p.is_local = (not demo) and p.peer_id == me
 			if p.is_local:
 				human = p
+				if Net.test.has("autopilot"):
+					var auto = BotScript.new()
+					auto.me = p
+					p.brain = auto
 		var sp: Vector3 = spawns[i % spawns.size()]
 		p.position = sp
 		p.yaw = atan2(sp.x, sp.z)
@@ -112,7 +117,7 @@ func _ready() -> void:
 		_pivot = human.position + Vector3(0, 1.55, 0)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	Net.game_ready(self)
-
+	Net.tlog("partida cargada, %d jugadores, mi slot %d" % [players.size(), human.slot if human != null else -1])
 
 func _exit_tree() -> void:
 	if Net.game == self:
@@ -291,6 +296,14 @@ func _physics_process(delta: float) -> void:
 		_wait_t += delta
 		if _wait_t > 0.4 and ((not online) or Net.all_ready() or _wait_t > 8.0):
 			emit_event(EV_START, [randi() % players.size()])
+	if Net.test.has("netlog") and not demo and match_state.is_playing():
+		_log_t -= delta
+		if _log_t <= 0.0:
+			_log_t = 5.0
+			var txt: String = ""
+			for p in players:
+				txt += "%d:(%d,%d,%d)%s " % [p.slot, roundi(p.global_position.x), roundi(p.global_position.y), roundi(p.global_position.z), "" if p.alive else "x"]
+			Net.tlog("pos t=%.1f portador=%d  %s" % [match_state.time_left, match_state.bearer.slot, txt])
 	if demo or human == null or get_tree().paused:
 		return
 	var space := get_world_3d().direct_space_state
@@ -347,6 +360,8 @@ func emit_event(kind: int, args: Array) -> void:
 
 
 func apply_event(kind: int, a: Array) -> void:
+	if not demo and (kind != EV_BALL or not authority):
+		Net.tlog("evento %d %s  t=%.1f" % [kind, str(a), match_state.time_left])
 	if kind == EV_START:
 		match_state.begin(players[a[0]])
 		if hud != null and match_state.bearer == human:
@@ -581,3 +596,7 @@ func on_match_ended() -> void:
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	hud.show_end()
+	Net.tlog("fin, puntos %s" % str(match_state.scores()))
+	if authority and Net.test.has("rematch"):
+		Net.test.erase("rematch")
+		get_tree().create_timer(3.0).timeout.connect(Net.start_match)
