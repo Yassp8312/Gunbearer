@@ -51,12 +51,24 @@ scripts/menu.gd        Menú principal y sala de espera (UI por código)
 scripts/main.gd        La partida: arena, jugadores, cámara, eventos, efectos
 scripts/match.gd       Estado de la partida: portador, puntos, tiempo, robos, impactos
 scripts/player.gd      Un jugador (humano local, remoto o bot)
+scripts/character.gd   Cuerpo visible del jugador: modelo, animaciones, tinte, Lanzador
+assets/kenney_mini/    Personajes y objetos "Mini Characters" de Kenney (CC0)
+assets/_zips/          Descargas originales. Fuera de git y de Godot (.gdignore)
 scripts/bot.gd         Cerebro de un bot (RefCounted)
 scripts/ball.gd        Bola de pintura
 scripts/hud.gd         Interfaz de la partida (CanvasLayer por código)
 ```
 
-**Convención importante:** casi todo se construye por código (arena, jugadores, UI, materiales). Las escenas `.tscn` solo tienen el nodo raíz con su script. No hay assets: los personajes son cápsulas de colores.
+**Convención importante:** casi todo se construye por código (arena, jugadores, UI, materiales). Las escenas `.tscn` solo tienen el nodo raíz con su script. Los únicos assets son los modelos de `assets/kenney_mini/`; si faltan, los personajes vuelven a ser cápsulas de colores.
+
+### Arte de los personajes
+
+- `character.gd` no sabe de reglas ni de red. `player.gd` le dice el estado con `play("idle" | "armed_idle" | "run" | "jump" | "fall" | "dash" | "stun" | "dead")`, y le pide `set_tint`, `paint`, `glow` y `make_weapon`.
+- El diccionario `PACKS` de `character.gd` dice qué modelos hay y cómo se llama cada animación. Para cambiar de pack o añadir personajes, se toca solo ahí.
+- Cada jugador recibe un personaje distinto según su `slot`, teñido con su color. El modelo se escala solo a 1,75 m y se gira para mirar a -Z.
+- El portador lleva el brazo derecho en la pose de `holding-right` mientras el resto del cuerpo sigue su animación (se impone tras cada paso con `mixer_applied`).
+- Se descartó la Universal Animation Library de Quaternius: su versión gratuita solo corre hacia adelante y el maniquí no pega con el tono.
+- Para revisar el arte sin jugar: `--showcam` (cámara frente al portador) y `--shot=RUTA` (guarda capturas a los 7, 10 y 13 s). Con `--autopilot` no se captura el mouse.
 
 ## Arquitectura
 
@@ -146,8 +158,9 @@ Host y cliente en `127.0.0.1`, 0 errores en ambas consolas, eventos y puntos id�
 ## Qué sigue, en orden
 
 1. Que Jorge juegue la red a mano (dos ventanas, y mejor aún dos PC) y arreglar lo que note.
-2. Arte: un solo cuerpo base con esqueleto y animaciones, y que los jugadores se diferencien por color y accesorios (sombreros, gafas, mochilas). Jorge quiere generar modelos con IA; la idea acordada es usar la IA para los accesorios y objetos sin animación, y Mixamo para el esqueleto del cuerpo base.
-3. Para después: power-ups, más arenas, mandos, online por internet.
+2. Arte, lo que queda: accesorios (sombreros, gafas, mochilas) que Jorge genera con IA en GLB y se enganchan a los huesos `head` y `torso`; un Lanzador propio si quiere cambiar el de Kenney; y después vestir la arena. Los cuerpos ya están (Kenney, CC0); no se usa Mixamo porque su licencia no deja subir los archivos a un repo público.
+3. Exportar a `.exe` para pasárselo a los amigos, y que quien llegue tarde pueda entrar en la ronda siguiente.
+4. Para después: power-ups, más arenas, mandos, online por internet.
 
 ## Estilo de código
 

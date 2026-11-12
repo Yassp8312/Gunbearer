@@ -63,6 +63,16 @@ func _read_test_args() -> void:
 		get_tree().create_timer(float(test["leave-after"])).timeout.connect(_leave_now)
 
 
+	# --shot=RUTA guarda capturas de pantalla (RUTA_1.png, _2, _3) a los 7, 10 y 13 s.
+	if test.has("shot"):
+		for i in 3:
+			get_tree().create_timer(7.0 + 3.0 * i).timeout.connect(_shot.bind(i + 1))
+
+
+func _shot(n: int) -> void:
+	get_viewport().get_texture().get_image().save_png("%s_%d.png" % [str(test["shot"]), n])
+
+
 func _leave_now() -> void:
 	if game != null:
 		tlog("salgo al menú")

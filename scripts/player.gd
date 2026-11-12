@@ -3,6 +3,8 @@ extends CharacterBody3D
 # is_local = lo mueve esta PC (tu teclado, o un bot si esta PC manda).
 # Si no es local, solo se dibuja donde dice la red.
 
+const CharacterScript = preload("res://scripts/character.gd")
+
 var game = null
 var match_state = null
 var brain = null
@@ -46,6 +48,7 @@ var _tick: int = 0
 var _respawn_sent: bool = false
 
 var _visual: Node3D = null
+var _char = null
 var _body_mat: StandardMaterial3D = null
 var _launcher: Node3D = null
 var _marker: MeshInstance3D = null
@@ -72,6 +75,19 @@ func _ready() -> void:
 	_visual.position = Vector3(0, 0.9, 0)
 	add_child(_visual)
 
+	# Cuerpo: un modelo animado. Si no está el archivo, queda la cápsula de siempre.
+	_char = CharacterScript.new()
+	if _char.setup(CharacterScript.DEFAULT_PACK, slot, color):
+		_char.position = Vector3(0, -0.9, 0)
+		_visual.add_child(_char)
+	else:
+		_char.free()
+		_char = null
+		_build_capsule()
+	_build_rest()
+
+
+func _build_capsule() -> void:
 	var body := MeshInstance3D.new()
 	var cm := CapsuleMesh.new()
 	cm.radius = 0.4
@@ -106,28 +122,33 @@ func _ready() -> void:
 		pupil.position = Vector3(0.15 * sx, 0.45, -0.43)
 		_visual.add_child(pupil)
 
-	# Lanzador
+
+func _build_rest() -> void:
 	_launcher = Node3D.new()
 	_launcher.position = Vector3(0.5, 0.15, -0.3)
 	_visual.add_child(_launcher)
-	var gun := MeshInstance3D.new()
-	var gm := BoxMesh.new()
-	gm.size = Vector3(0.24, 0.26, 0.8)
-	var gmat := StandardMaterial3D.new()
-	gmat.albedo_color = Color("2b2d42")
-	gm.material = gmat
-	gun.mesh = gm
-	_launcher.add_child(gun)
-	var tank := MeshInstance3D.new()
-	var tm := SphereMesh.new()
-	tm.radius = 0.2
-	tm.height = 0.4
-	var tmat := StandardMaterial3D.new()
-	tmat.albedo_color = color
-	tm.material = tmat
-	tank.mesh = tm
-	tank.position = Vector3(0, 0.26, 0.1)
-	_launcher.add_child(tank)
+	var weapon: Node3D = _char.make_weapon() if _char != null else null
+	if weapon != null:
+		_launcher.add_child(weapon)
+	else:
+		var gun := MeshInstance3D.new()
+		var gm := BoxMesh.new()
+		gm.size = Vector3(0.24, 0.26, 0.8)
+		var gmat := StandardMaterial3D.new()
+		gmat.albedo_color = Color("2b2d42")
+		gm.material = gmat
+		gun.mesh = gm
+		_launcher.add_child(gun)
+		var tank := MeshInstance3D.new()
+		var tm := SphereMesh.new()
+		tm.radius = 0.2
+		tm.height = 0.4
+		var tmat := StandardMaterial3D.new()
+		tmat.albedo_color = color
+		tm.material = tmat
+		tank.mesh = tm
+		tank.position = Vector3(0, 0.26, 0.1)
+		_launcher.add_child(tank)
 	_launcher.visible = false
 
 	# Marca y luz sobre el portador
@@ -202,6 +223,8 @@ func muzzle_position() -> Vector3:
 
 func set_bearer(b: bool) -> void:
 	is_bearer = b
+	if _char != null:
+		_char.armed = b
 	if _launcher != null:
 		_launcher.visible = b
 		_marker.visible = b
@@ -363,8 +386,13 @@ func eliminate(dir: Vector3, paint: Color) -> void:
 		flat = Vector3.FORWARD
 	velocity = flat.normalized() * Tuning.knock_speed + Vector3.UP * Tuning.knock_up
 	_spin = Vector3(randf_range(-9.0, 9.0), randf_range(-6.0, 6.0), randf_range(-9.0, 9.0))
-	_body_mat.albedo_color = paint
-	_body_mat.emission_enabled = false
+	if _char != null:
+		_char.paint(paint)
+		_char.glow(false, 0.0)
+		_char.play("dead")
+	else:
+		_body_mat.albedo_color = paint
+		_body_mat.emission_enabled = false
 	_visual.scale = Vector3.ONE
 	_visual.position.y = 0.9
 
@@ -389,7 +417,10 @@ func respawn_at(pos: Vector3) -> void:
 	net_vel = Vector3.ZERO
 	velocity = Vector3.ZERO
 	_visual.rotation = Vector3.ZERO
-	_body_mat.albedo_color = color
+	if _char != null:
+		_char.set_tint(color)
+	else:
+		_body_mat.albedo_color = color
 	shield_timer = Tuning.respawn_shield
 	stun_timer = 0.0
 
@@ -411,13 +442,28 @@ func _update_visual(delta: float) -> void:
 	else:
 		_visual.scale = _visual.scale.lerp(Vector3.ONE, minf(1.0, 14.0 * delta))
 		var bob: float = 0.0
-		if hs > 1.0 and absf(velocity.y) < 0.6:
+		if _char == null and hs > 1.0 and absf(velocity.y) < 0.6:
 			_bob += delta * hs * 1.7
 			bob = absf(sin(_bob)) * 0.08
 		_visual.position.y = 0.9 + bob
 	var protected: bool = immune_timer > 0.0 or shield_timer > 0.0
-	_body_mat.emission_enabled = protected
-	_body_mat.emission_energy_multiplier = 0.5 + 0.4 * sin(Time.get_ticks_msec() * 0.02)
+	var pulse: float = 0.5 + 0.4 * sin(Time.get_ticks_msec() * 0.02)
+	if _char != null:
+		_char.glow(protected, pulse)
+		var air: bool = (not is_on_floor()) if is_local else absf(velocity.y) > 1.0
+		if stun_timer > 0.0:
+			_char.play("stun")
+		elif dashing:
+			_char.play("dash", 1.6)
+		elif air:
+			_char.play("jump" if velocity.y > 0.0 else "fall")
+		elif hs > 1.0:
+			_char.play("run", clampf(hs / Tuning.run_speed, 0.6, 1.4))
+		else:
+			_char.play("armed_idle" if is_bearer else "idle")
+	else:
+		_body_mat.emission_enabled = protected
+		_body_mat.emission_energy_multiplier = pulse
 	if _marker.visible:
 		_marker.rotation.y += delta * 3.0
 		_marker.position.y = 2.75 + sin(Time.get_ticks_msec() * 0.006) * 0.12

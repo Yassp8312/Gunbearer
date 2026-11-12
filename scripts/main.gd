@@ -115,7 +115,8 @@ func _ready() -> void:
 	match_state.feed.connect(hud.add_feed)
 	if human != null:
 		_pivot = human.position + Vector3(0, 1.55, 0)
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if not Net.test.has("autopilot"):
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	Net.game_ready(self)
 	Net.tlog("partida cargada, %d jugadores, mi slot %d" % [players.size(), human.slot if human != null else -1])
 
@@ -337,6 +338,12 @@ func _process(delta: float) -> void:
 		cam.look_at_from_position(Vector3(cos(_demo_ang) * 30.0, 15.0, sin(_demo_ang) * 30.0), Vector3(0, 1, 0), Vector3.UP)
 		return
 	if human == null:
+		return
+	# Prueba: --showcam mira al portador de frente, para revisar el arte en capturas.
+	if Net.test.has("showcam") and match_state.bearer != null:
+		var bp = match_state.bearer
+		var eye: Vector3 = bp.global_position + bp.forward() * 3.2 + bp.right() * 1.6 + Vector3(0, 1.7, 0)
+		cam.look_at_from_position(eye, bp.global_position + Vector3(0, 1.0, 0), Vector3.UP)
 		return
 	var aiming: bool = Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and human.is_bearer and human.alive and not menu_open
 	var k: float = 1.0 - exp(-12.0 * delta)
