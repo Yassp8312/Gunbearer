@@ -554,9 +554,9 @@ func _build_credits() -> void:
 	col.add_child(UI.label("Un juego de Yassper Design", UI.F_BODY, UI.MUTED, true))
 	col.add_child(UI.rule())
 	col.add_child(UI.gap(2))
-	_credit(col, "Dirección y programación", "Jorge Ricardo Cintra Rad")
-	_credit(col, "Arte", "Jesús Luis Pérez Martínez")
-	_credit(col, "Personajes y objetos", "Mini Characters, de Kenney", "kenney.nl  ·  licencia Creative Commons CC0")
+	_credit(col, "Idea original y dirección", "Jorge Ricardo Cintra Rad")
+	_credit(col, "Programación", "Jorge Ricardo Cintra Rad\nJesús Luis Pérez Martínez")
+	_credit(col, "Arte", "Kenney", "Mini Characters  ·  kenney.nl  ·  licencia Creative Commons CC0")
 	_credit(col, "Motor", "Godot Engine", "godotengine.org  ·  licencia MIT")
 	col.add_child(UI.button("Volver", _back, true))
 

@@ -45,9 +45,9 @@ Todos los números del juego están en `autoload/tuning.gd`.
 - La primera vez, Windows pregunta si deja pasar a Godot por el firewall: hay que decir que sí.
 
 ## Créditos
-- **Dirección y programación:** Jorge Ricardo Cintra Rad
-- **Arte:** Jesús Luis Pérez Martínez
-- **Personajes y objetos:** [Mini Characters](https://kenney.nl/assets/mini-characters), de Kenney, con licencia Creative Commons CC0
+- **Idea original y dirección:** Jorge Ricardo Cintra Rad
+- **Programación:** Jorge Ricardo Cintra Rad y Jesús Luis Pérez Martínez
+- **Arte:** Kenney ([Mini Characters](https://kenney.nl/assets/mini-characters), con licencia Creative Commons CC0)
 - **Motor:** [Godot Engine](https://godotengine.org/)
 
 ---

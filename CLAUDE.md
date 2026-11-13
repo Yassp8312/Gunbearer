@@ -103,7 +103,7 @@ scripts/hud.gd         Interfaz de la partida (CanvasLayer por código)
 - **Estadísticas:** `stat_steals`, `stat_shots`, `stat_best_streak` y `stat_time` en cada jugador; cada PC las cuenta con los eventos que recibe.
 - **settings.cfg** lo escriben `Net.save_cfg` y `Settings.save`; los dos cargan el archivo antes de guardar para no pisarse.
 - Atajos de prueba nuevos: `--screen=options|credits|solo` abre esa pantalla, `--char=N`, `--arena=N`, `--backlobby`, `--shot-at=S`.
-- **Créditos** (pantalla del menú y README): dirección y programación, Jorge Ricardo Cintra Rad; arte, Jesús Luis Pérez Martínez; personajes, Kenney (CC0); motor, Godot.
+- **Créditos** (pantalla del menú y README): idea original y dirección, Jorge Ricardo Cintra Rad; programación, Jorge y Jesús Luis Pérez Martínez (Jesús es programador, no artista); arte, Kenney (Mini Characters, CC0); motor, Godot.
 
 ## Arquitectura
 
