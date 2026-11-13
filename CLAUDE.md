@@ -201,8 +201,15 @@ Host y cliente en `127.0.0.1`, 0 errores en ambas consolas, eventos y puntos id�
 2. Interfaz, lo que queda: el HUD de la partida (marcador, avisos, munición) todavía no usa `ui.gd`; y las opciones no se pueden abrir desde la pausa, solo desde el menú principal.
 3. Arte, lo que queda: accesorios de personaje (el pack de Kenney trae gafas, gafas de sol y mascarilla; el resto se haría por código) y un Lanzador propio.
 4. Revisar el azar con ojo competitivo: primer portador y puntos de reaparición.
-5. Exportar a `.exe` para pasárselo a los amigos.
-6. Para después: power-ups, más arenas, mandos, online por internet.
+5. Para después: power-ups, más arenas, mandos, online por internet.
+
+## Compilar (exportar a .exe)
+
+- Plantilla: solo la de Windows de Godot 4.5, en `D:\Trabajo\Motores\Godot\plantillas_4.5\` (se bajó del archivo oficial `.tpz` pidiendo solo ese trozo; no se instaló en el C:). Las plantillas 4.2.1 de `%APPDATA%\Godot\export_templates` son de MAAI y no sirven para 4.5.
+- `export_presets.cfg` apunta a esa plantilla con `custom_template/release`. Está en `.gitignore` porque lleva una ruta de esta PC.
+- Comando: `Godot_v4.5-stable_win64_console.exe --headless --path . --export-release "Windows Desktop" build/Gunbearer.exe`. Sale un solo `.exe` (unos 95 MB, el juego va dentro) con el icono incluido.
+- Para repartir: `build/Gunbearer.zip` con el `.exe` y un `LEEME.txt`. `build/` está fuera de git y de Godot (`.gdignore`).
+- El `.exe` no está firmado: Windows SmartScreen avisa la primera vez ("Más información" → "Ejecutar de todas formas").
 
 ## Estilo de código
 
