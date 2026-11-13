@@ -114,6 +114,7 @@ func _ready() -> void:
 		cam.look_at_from_position(Vector3(30.0, 15.0, 0.0), Vector3(0, 1, 0), Vector3.UP)
 		return
 	Sfx.muted = false
+	Music.play("match")
 	hud = HudScript.new()
 	hud.game = self
 	add_child(hud)
@@ -325,6 +326,7 @@ func _process(delta: float) -> void:
 		_demo_ang += delta * 0.12
 		cam.look_at_from_position(Vector3(cos(_demo_ang) * 30.0, 15.0, sin(_demo_ang) * 30.0), Vector3(0, 1, 0), Vector3.UP)
 		return
+	Music.urgent = match_state.is_playing() and match_state.time_left <= 10.0
 	if human == null:
 		return
 	# Prueba: --showcam mira al portador de frente, para revisar el arte en capturas.
@@ -594,6 +596,7 @@ func on_match_ended() -> void:
 	menu_open = false
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Music.play("menu")
 	hud.show_end()
 	Net.tlog("fin, puntos %s" % str(match_state.scores()))
 	if authority and Net.test.has("backlobby"):

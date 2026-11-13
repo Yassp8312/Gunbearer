@@ -61,14 +61,14 @@ func apply_give(to, from) -> void:
 	bearer = to
 	for p in players:
 		p.set_bearer(p == to)
-	to.immune_timer = Tuning.steal_immunity
-	to.ammo = Tuning.magazine
+	to.immune_timer = float(to.stat("steal_immunity"))
+	to.ammo = int(to.stat("magazine"))
 	to.reload_timer = 0.0
 	to.fire_timer = 0.3
 	to.streak = 0
 	if from != null:
 		to.stat_steals += 1
-		from.stun_timer = Tuning.steal_stun
+		from.stun_timer = float(from.stat("steal_stun"))
 		from.streak = 0
 		feed.emit("%s le robó el Lanzador a %s" % [to.display_name, from.display_name], to.color)
 		Sfx.play("steal")
@@ -144,12 +144,13 @@ func _check_steal() -> void:
 	if bearer == null or bearer.immune_timer > 0.0:
 		return
 	var best = null
-	var best_d: float = Tuning.steal_radius
+	var best_d: float = 999.0
 	for p in players:
 		if p == bearer or not p.alive or p.stun_timer > 0.0:
 			continue
 		var d: float = p.global_position.distance_to(bearer.global_position)
-		if d < best_d:
+		# Cada clase roba desde su propia distancia; gana el que esté más cerca.
+		if d < float(p.stat("steal_radius")) and d < best_d:
 			best_d = d
 			best = p
 	if best != null:

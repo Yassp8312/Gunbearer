@@ -9,6 +9,7 @@ Segundo juego de la serie de Yassper Design (después de MAAI). Hecho en Godot 4
 - El nuevo portador tiene 2 s de inmunidad; el que lo perdió queda aturdido 1 s.
 - El portador corre más lento y tiene 5 bolas con recarga.
 - La partida dura 3 minutos. Gana quien tenga más puntos.
+- Cada personaje pertenece a una de seis clases (Artillero, Velocista, Ladrón, Blindado, Saltarín, Tirador), con una ventaja y un costo.
 
 ## Controles
 | Acción | Tecla |
@@ -49,6 +50,7 @@ Todos los números del juego están en `autoload/tuning.gd`.
 - **Programación:** Jorge Ricardo Cintra Rad y Jesús Luis Pérez Martínez
 - **Arte:** Kenney ([Mini Characters](https://kenney.nl/assets/mini-characters), con licencia Creative Commons CC0)
 - **Motor:** [Godot Engine](https://godotengine.org/)
+- **Sonido y música:** generados por código, sin archivos de audio
 
 ---
 <sub>[Jorge Coffee](https://jorge-coffee.onrender.com/)</sub>

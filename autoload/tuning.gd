@@ -49,6 +49,45 @@ var bot_dash_eagerness: float = 2.0
 var pad_power: float = 15.0
 var pad_radius: float = 1.3
 
+# ---------- Clases de personaje ----------
+# Cada clase cambia unos pocos números de arriba: una ventaja y un costo, para que
+# ninguna sea la mejor en todo. Lo que una clase no nombra, vale lo de siempre.
+# "pro" y "con" son los textos que ve el jugador al elegir.
+var dash_charges: int = 1
+var speed_factor: float = 1.0
+
+const CLASSES: Array = [
+	{"name": "Artillero", "pro": "7 bolas en vez de 5", "con": "Recarga más lenta",
+		"magazine": 7, "reload_time": 2.0},
+	{"name": "Velocista", "pro": "Dos dash seguidos", "con": "Cada dash llega más corto",
+		"dash_charges": 2, "dash_time": 0.13},
+	{"name": "Ladrón", "pro": "Roba desde más lejos", "con": "Si le roban, queda aturdido más tiempo",
+		"steal_radius": 1.9, "steal_stun": 1.5},
+	{"name": "Blindado", "pro": "3 s de inmunidad al robar", "con": "Corre un poco más lento",
+		"steal_immunity": 3.0, "speed_factor": 0.93},
+	{"name": "Saltarín", "pro": "Salta más alto y gira mejor en el aire", "con": "El dash tarda más en recargar",
+		"jump_velocity": 10.0, "air_accel": 30.0, "dash_cooldown": 4.0},
+	{"name": "Tirador", "pro": "Bolas más rápidas y rectas", "con": "Solo 3 bolas",
+		"ball_speed": 40.0, "ball_gravity": 4.0, "magazine": 3},
+]
+
+# Clase de cada personaje, en el orden de character.gd (Leo, Mara, Alienígena, Robot, Caballero,
+# Zombi, Obrero, Saqueador, Beto, Nina, Soldado, Coco, Lola, Dani, Vera, Edu, Sol, Fito, Gala, Gus).
+const CHAR_CLASS: Array = [1, 2, 4, 0, 3, 3, 0, 2, 5, 1, 5, 4, 0, 2, 5, 3, 4, 1, 0, 1]
+
+
+func class_of(char_index: int) -> Dictionary:
+	return CLASSES[CHAR_CLASS[posmod(char_index, CHAR_CLASS.size())]]
+
+
+# Un número del juego ajustado por la clase del personaje. Ej.: stat(3, "magazine").
+func stat(char_index: int, key: String):
+	var c: Dictionary = class_of(char_index)
+	if c.has(key):
+		return c[key]
+	return get(key)
+
+
 # Dificultad de los bots: 0 fácil, 1 normal, 2 difícil
 var difficulty: int = 1
 

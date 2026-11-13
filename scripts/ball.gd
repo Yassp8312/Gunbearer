@@ -7,6 +7,7 @@ var shooter = null
 var color: Color = Color.WHITE
 var game = null
 var _life: float = 0.0
+var _gravity: float = 7.0
 
 
 func setup(p_game, p_id: int, p_shooter, p_pos: Vector3, p_dir: Vector3) -> void:
@@ -15,7 +16,8 @@ func setup(p_game, p_id: int, p_shooter, p_pos: Vector3, p_dir: Vector3) -> void
 	shooter = p_shooter
 	color = p_shooter.color
 	position = p_pos
-	velocity = p_dir * Tuning.ball_speed
+	velocity = p_dir * float(p_shooter.stat("ball_speed"))
+	_gravity = float(p_shooter.stat("ball_gravity"))
 
 
 func _ready() -> void:
@@ -47,7 +49,7 @@ func _physics_process(delta: float) -> void:
 	var dt: float = delta / float(steps)
 	var space := get_world_3d().direct_space_state
 	for i in steps:
-		velocity.y -= Tuning.ball_gravity * dt
+		velocity.y -= _gravity * dt
 		var from: Vector3 = global_position
 		var to: Vector3 = from + velocity * dt
 		var q := PhysicsRayQueryParameters3D.create(from, to, 1)

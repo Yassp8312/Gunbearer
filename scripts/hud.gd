@@ -232,15 +232,17 @@ func _process(delta: float) -> void:
 	if h.reload_timer > 0.0:
 		_ammo.text = "Recargando..."
 	else:
-		_ammo.text = "Bolas %d/%d" % [h.ammo, Tuning.magazine]
+		_ammo.text = "Bolas %d/%d" % [h.ammo, int(h.stat("magazine"))]
 	_ammo.position = Vector2(vs.x - 320.0, vs.y - 64.0)
 	_ammo.size = Vector2(300.0, 40.0)
 
-	if h.dash_cd > 0.0:
+	if h.dash_left <= 0:
 		_dash.text = "Dash %.1f" % h.dash_cd
 		_dash.modulate = Color(1, 1, 1, 0.55)
 	else:
 		_dash.text = "Dash listo [%s]" % Settings.key_name("gb_dash")
+		if int(h.stat("dash_charges")) > 1:
+			_dash.text += "  x%d" % h.dash_left
 		_dash.modulate = Color("7dffb0")
 	_dash.position = Vector2(20.0, vs.y - 60.0)
 	_dash.size = Vector2(300.0, 40.0)

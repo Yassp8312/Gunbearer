@@ -8,7 +8,7 @@ Shooter de fiesta en 3D hecho en **Godot 4.5 (GDScript)**. Segundo juego de la s
 
 El 12 de noviembre de 2026 Jorge dijo que quiere que Gunbearer se convierta en un juego competitivo. El alcance acordado es **por etapas: primero competitivo entre amigos en red local** (gratis y con la red actual); el salto a online con clasificación se decide después, cuando lo primero esté sólido. Cada decisión nueva debe respetar esto:
 
-- **Juego limpio antes que adorno:** todos los personajes tienen el mismo tamaño de impacto y la misma velocidad; el arte no cambia las reglas.
+- **Juego limpio antes que adorno:** todos los personajes tienen el mismo tamaño de impacto. Desde el 12 de noviembre de 2026, por decisión de Jorge, los personajes se agrupan en **clases** con reglas distintas; cada clase tiene una ventaja **y un costo**, y ninguna debe ser la mejor en todo. No añadas una ventaja sin su costo.
 - **Legibilidad:** tiene que verse al instante quién es quién y quién lleva el Lanzador.
 - **Arenas justas:** simétricas, sin puntos de reaparición con ventaja.
 - **Nada de azar que decida partidas** sin que Jorge lo apruebe.
@@ -34,6 +34,7 @@ El 12 de noviembre de 2026 Jorge dijo que quiere que Gunbearer se convierta en u
 - La partida dura 3 minutos. Gana quien tenga más puntos.
 - Tono: gracioso y caótico. Cámara en tercera persona sobre el hombro, controles de shooter.
 - De 2 a 8 jugadores. Solo PC. Red local (no online por ahora) y modo contra bots.
+- **Clases** (los 20 personajes se reparten entre 6; números en `Tuning.CLASSES`, sin probar todavía con gente): Artillero (7 bolas, recarga 2 s), Velocista (2 dash, más cortos), Ladrón (roba a 1,9 m, 1,5 s aturdido si le roban), Blindado (3 s de inmunidad, corre al 93 %), Saltarín (salta más y gira mejor en el aire, dash cada 4 s), Tirador (bolas más rápidas y rectas, solo 3).
 
 **Controles:** WASD, mouse, clic izquierdo dispara, clic derecho apunta fino, Espacio salta, Shift dash, R recarga, Esc pausa/menú, Q sale al menú (con el menú abierto o al terminar), Enter lanza otra ronda (solo quien manda).
 
@@ -51,11 +52,12 @@ El 12 de noviembre de 2026 Jorge dijo que quiere que Gunbearer se convierta en u
 ## Estructura
 
 ```
-project.godot          Autoloads: Tuning, Sfx, Settings, Net. Ventana 1280x720.
+project.godot          Autoloads: Tuning, Sfx, Music, Settings, Net. Ventana 1280x720.
 scenes/menu.tscn       Nodo raíz "Menu" con scripts/menu.gd
 scenes/main.tscn       Nodo raíz "Main" (Node3D) con scripts/main.gd  -> la partida
 autoload/tuning.gd     TODOS los números del juego y los presets de dificultad
 autoload/sfx.gd        Sonidos generados por código (no hay archivos de audio)
+autoload/music.gd      Música por código: un secuenciador que dispara notas cortas (menú y partida)
 autoload/settings.gd   Opciones: controles reasignables (acciones gb_*), sensibilidad, volumen, pantalla completa
 autoload/net.gd        Red: ENet, sala de espera, búsqueda UDP y todos los RPC
 scripts/ui.gd          Estilo único de la interfaz: colores, tamaños, botones, paneles
@@ -100,6 +102,8 @@ scripts/hud.gd         Interfaz de la partida (CanvasLayer por código)
 - **Controles:** el juego nunca pregunta por una tecla, sino por una acción (`Input.is_action_pressed("gb_jump")`). Las acciones y sus teclas de fábrica están en `Settings.ACTIONS`. Los textos que nombran teclas usan `Settings.key_name()`. Esc, Q, Enter y B son fijas.
 - **Campos:** `Net.arena` es lo elegido en el menú (-1 = aleatorio) y `Net.arena_now` el de la partida en curso, que viaja en `s_start`. Las reglas para que un campo sea justo están al principio de `scripts/arenas.gd`.
 - **Volver a la sala:** al terminar, el host pulsa B y `Net.back_to_lobby()` (RPC `s_back`) manda a todos al menú con la conexión abierta; `menu.gd` muestra la sala si `Net.mode` es host o client. Ahí puede entrar gente nueva.
+- **Clases:** `Tuning.CLASSES` y `Tuning.CHAR_CLASS` (qué clase es cada personaje). El juego pide cada número con `player.stat("magazine")` en vez de `Tuning.magazine`, y así sale ya ajustado por la clase. Para una clase nueva o un ajuste de balance se toca solo `tuning.gd`. El menú muestra la ventaja y el costo en la tarjeta del jugador.
+- **Música:** `Music.play("menu" | "match" | "")` y `Music.urgent` (acelera en los últimos 10 s). Suena por el bus `Music`, con su volumen en Opciones. Está compuesta por código y nadie la ha oído todavía más que Jorge: si no convence, las canciones son los patrones de `SONGS` en `music.gd`. Al cerrar con una nota sonando, Godot a veces avisa de un `AudioStreamWAV` sin liberar; es inofensivo.
 - **Estadísticas:** `stat_steals`, `stat_shots`, `stat_best_streak` y `stat_time` en cada jugador; cada PC las cuenta con los eventos que recibe.
 - **settings.cfg** lo escriben `Net.save_cfg` y `Settings.save`; los dos cargan el archivo antes de guardar para no pisarse.
 - Atajos de prueba nuevos: `--screen=options|credits|solo` abre esa pantalla, `--char=N`, `--arena=N`, `--backlobby`, `--shot-at=S`.

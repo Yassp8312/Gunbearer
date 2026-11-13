@@ -77,7 +77,7 @@ func _think_chaser(delta: float, pos: Vector3) -> Vector3:
 
 	if b.immune_timer > 0.0 and dist < 4.0:
 		move = perp
-	elif dist < 5.5 and dist > 1.5 and me.dash_cd <= 0.0 and randf() < Tuning.bot_dash_eagerness * delta:
+	elif dist < 5.5 and dist > 1.5 and me.dash_left > 0 and randf() < Tuning.bot_dash_eagerness * delta:
 		me.in_dash = true
 		move = dir
 	if bpos.y - pos.y > 0.8 and dist < 6.0 and me.is_on_floor():
@@ -107,17 +107,17 @@ func _think_bearer(delta: float, pos: Vector3) -> Vector3:
 	var cb: float = clampf(center.length() / 20.0, 0.0, 1.0)
 	var flee: float = 1.0 if best < 9.0 else 0.2
 	var move: Vector3 = (away * flee + perp * 0.6 + center.normalized() * cb * 1.2).normalized()
-	if best < 3.5 and me.dash_cd <= 0.0 and me.immune_timer <= 0.0:
+	if best < 3.5 and me.dash_left > 0 and me.immune_timer <= 0.0:
 		me.in_dash = true
 
 	# Apuntar con adelanto y un poco de error.
 	var tp: Vector3 = npos + Vector3(0, 0.9, 0)
 	var origin: Vector3 = me.muzzle_position()
 	var dist: float = origin.distance_to(tp)
-	var t: float = dist / Tuning.ball_speed
+	var t: float = dist / float(me.stat("ball_speed"))
 	var nvel: Vector3 = nearest.velocity
 	var lead: Vector3 = tp + Vector3(nvel.x, 0.0, nvel.z) * t
-	lead.y += 0.5 * Tuning.ball_gravity * t * t
+	lead.y += 0.5 * float(me.stat("ball_gravity")) * t * t
 	_react -= delta
 	if _react <= 0.0:
 		_react = 0.35

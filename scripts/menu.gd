@@ -26,6 +26,9 @@ var _waiting_bind: String = ""          # acción que espera una tecla nueva
 var _preview_holder: Node3D = null
 var _preview_char = null
 var _char_label: Label = null
+var _class_label: Label = null
+var _pro_label: Label = null
+var _con_label: Label = null
 
 # Atajos de prueba
 var _auto_host: int = 0
@@ -36,6 +39,7 @@ func _ready() -> void:
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Sfx.muted = true
+	Music.play("menu")
 
 	var demo = load("res://scenes/main.tscn").instantiate()
 	demo.demo = true
@@ -167,6 +171,9 @@ func _show(screen: String) -> void:
 	_preview_holder = null
 	_preview_char = null
 	_char_label = null
+	_class_label = null
+	_pro_label = null
+	_con_label = null
 	if screen == "solo":
 		_build_solo()
 	elif screen == "host":
@@ -239,7 +246,7 @@ func _build_profile() -> void:
 
 	var svc := SubViewportContainer.new()
 	svc.stretch = true
-	svc.custom_minimum_size = Vector2(274, 250)
+	svc.custom_minimum_size = Vector2(274, 210)
 	col.add_child(svc)
 	var sv := SubViewport.new()
 	sv.own_world_3d = true
@@ -278,6 +285,13 @@ func _build_profile() -> void:
 	pick.add_child(_char_label)
 	pick.add_child(next)
 	col.add_child(pick)
+	# Clase del personaje: su ventaja y su costo.
+	_class_label = UI.label("", UI.F_BODY, UI.ACCENT, true)
+	_pro_label = UI.label("", UI.F_SMALL, UI.GOOD, true)
+	_con_label = UI.label("", UI.F_SMALL, UI.BAD, true)
+	col.add_child(_class_label)
+	col.add_child(_pro_label)
+	col.add_child(_con_label)
 
 	col.add_child(UI.label("Nombre", UI.F_SMALL, UI.MUTED))
 	var name_edit := LineEdit.new()
@@ -294,6 +308,10 @@ func _set_preview(index: int) -> void:
 	Net.my_char = posmod(index, CharacterScript.count())
 	if _char_label != null:
 		_char_label.text = CharacterScript.name_of(Net.my_char)
+		var cls: Dictionary = Tuning.class_of(Net.my_char)
+		_class_label.text = str(cls["name"]).to_upper()
+		_pro_label.text = "+  " + str(cls["pro"])
+		_con_label.text = "-  " + str(cls["con"])
 	if _preview_holder == null:
 		return
 	if _preview_char != null:
@@ -496,7 +514,14 @@ func _build_options() -> void:
 	vol.step = 0.05
 	vol.value = Settings.volume
 	vol.value_changed.connect(_on_volume)
-	col2.add_child(UI.row("Volumen", vol, 170.0))
+	col2.add_child(UI.row("Volumen general", vol, 170.0))
+	var mus := HSlider.new()
+	mus.min_value = 0.0
+	mus.max_value = 1.0
+	mus.step = 0.05
+	mus.value = Settings.music
+	mus.value_changed.connect(_on_music)
+	col2.add_child(UI.row("Música", mus, 170.0))
 	var full := CheckButton.new()
 	full.button_pressed = Settings.fullscreen
 	full.toggled.connect(_on_fullscreen)
@@ -530,6 +555,12 @@ func _on_sens(v: float) -> void:
 
 func _on_volume(v: float) -> void:
 	Settings.volume = v
+	Settings.apply()
+	Settings.save()
+
+
+func _on_music(v: float) -> void:
+	Settings.music = v
 	Settings.apply()
 	Settings.save()
 
@@ -589,7 +620,8 @@ func _refresh() -> void:
 				var who: String = str(p["name"])
 				if int(p["peer"]) == me:
 					who += "  (tú)"
-				_rows_box.add_child(_lobby_row(color, who, CharacterScript.name_of(int(p.get("char", 0))), tag, true))
+				var ci: int = int(p.get("char", 0))
+				_rows_box.add_child(_lobby_row(color, who, "%s  ·  %s" % [CharacterScript.name_of(ci), str(Tuning.class_of(ci)["name"])], tag, true))
 			elif i < humans + bots:
 				_rows_box.add_child(_lobby_row(color, "Bot de relleno", DIFF[clampi(Net.difficulty, 0, 2)], "BOT", true))
 			elif humans == 0:

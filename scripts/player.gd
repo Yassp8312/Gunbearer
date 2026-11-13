@@ -31,6 +31,8 @@ var immune_timer: float = 0.0
 var shield_timer: float = 0.0
 var respawn_timer: float = 0.0
 var dash_cd: float = 0.0
+var dash_left: int = 1       # cargas de dash disponibles
+var _dash_held: bool = false
 var dash_timer: float = 0.0
 var dash_dir: Vector3 = Vector3.ZERO
 var ammo: int = 0
@@ -230,6 +232,11 @@ func _build_rest() -> void:
 		add_child(_tag)
 
 
+# Un número del juego, ya ajustado por la clase de este personaje (ver Tuning.CLASSES).
+func stat(key: String):
+	return Tuning.stat(char_index, key)
+
+
 func forward() -> Vector3:
 	return Vector3(-sin(yaw), 0.0, -cos(yaw))
 
@@ -296,10 +303,10 @@ func _physics_process(delta: float) -> void:
 	wish.y = 0.0
 	if wish.length() > 1.0:
 		wish = wish.normalized()
-	var speed: float = Tuning.run_speed
+	var speed: float = Tuning.run_speed * float(stat("speed_factor"))
 	if is_bearer:
 		speed *= Tuning.bearer_speed_factor
-	var a: float = Tuning.accel if is_on_floor() else Tuning.air_accel
+	var a: float = Tuning.accel if is_on_floor() else float(stat("air_accel"))
 	var hv: Vector3 = Vector3(velocity.x, 0.0, velocity.z).move_toward(wish * speed, a * delta)
 	velocity.x = hv.x
 	velocity.z = hv.z
@@ -307,15 +314,22 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= Tuning.gravity * delta
 	elif can_act and in_jump:
-		velocity.y = Tuning.jump_velocity
+		velocity.y = float(stat("jump_velocity"))
 		if self == game.human:
 			Sfx.play("jump", randf_range(0.95, 1.1), -8.0)
 
-	if can_act and in_dash and dash_cd <= 0.0:
+	# El dash se gasta por cargas (el Velocista tiene dos) y pide soltar y volver a pulsar.
+	if dash_cd <= 0.0:
+		dash_left = int(stat("dash_charges"))
+	var dash_pressed: bool = in_dash and not _dash_held
+	_dash_held = in_dash
+	if can_act and dash_pressed and dash_left > 0 and dash_timer <= 0.0:
+		dash_left -= 1
 		var d: Vector3 = wish if wish.length() > 0.1 else forward()
 		dash_dir = d.normalized()
-		dash_timer = Tuning.dash_time
-		dash_cd = Tuning.dash_cooldown
+		dash_timer = float(stat("dash_time"))
+		if dash_cd <= 0.0:
+			dash_cd = float(stat("dash_cooldown"))
 		if self == game.human:
 			Sfx.play("dash")
 	if dash_timer > 0.0:
@@ -378,10 +392,10 @@ func _weapon(delta: float) -> void:
 	if reload_timer > 0.0:
 		reload_timer -= delta
 		if reload_timer <= 0.0:
-			ammo = Tuning.magazine
+			ammo = int(stat("magazine"))
 		return
-	if ammo <= 0 or (in_reload and ammo < Tuning.magazine):
-		reload_timer = Tuning.reload_time
+	if ammo <= 0 or (in_reload and ammo < int(stat("magazine"))):
+		reload_timer = float(stat("reload_time"))
 		if self == game.human:
 			Sfx.play("reload")
 		return

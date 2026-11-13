@@ -22,7 +22,8 @@ const ACTIONS: Array = [
 
 var binds: Dictionary = {}      # id de acción -> {"k": código} o {"m": botón}
 var sens: float = 1.0           # multiplica a Tuning.mouse_sens
-var volume: float = 0.8         # 0 a 1
+var volume: float = 0.8         # volumen general, 0 a 1
+var music: float = 0.6          # volumen de la música, 0 a 1
 var fullscreen: bool = false
 
 
@@ -40,6 +41,7 @@ func _ready() -> void:
 				binds[a["id"]] = v
 		sens = clampf(float(cf.get_value("options", "sens", sens)), 0.2, 3.0)
 		volume = clampf(float(cf.get_value("options", "volume", volume)), 0.0, 1.0)
+		music = clampf(float(cf.get_value("options", "music", music)), 0.0, 1.0)
 		fullscreen = bool(cf.get_value("options", "fullscreen", fullscreen))
 	apply()
 
@@ -55,6 +57,10 @@ func apply() -> void:
 		InputMap.action_add_event(id, _event(binds[id]))
 	AudioServer.set_bus_mute(0, volume <= 0.001)
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(volume, 0.001)))
+	var mb: int = AudioServer.get_bus_index(Music.BUS)
+	if mb >= 0:
+		AudioServer.set_bus_mute(mb, music <= 0.001)
+		AudioServer.set_bus_volume_db(mb, linear_to_db(maxf(music, 0.001)))
 	if DisplayServer.get_name() != "headless":
 		var mode: int = DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
 		if DisplayServer.window_get_mode() != mode:
@@ -137,5 +143,6 @@ func save() -> void:
 		cf.set_value("controls", id, binds[id])
 	cf.set_value("options", "sens", sens)
 	cf.set_value("options", "volume", volume)
+	cf.set_value("options", "music", music)
 	cf.set_value("options", "fullscreen", fullscreen)
 	cf.save(PATH)
