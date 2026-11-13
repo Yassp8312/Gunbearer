@@ -15,6 +15,9 @@ config/description="Solo uno tiene el arma, y tenerla te convierte en el blanco 
 run/main_scene="res://scenes/menu.tscn"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://assets/icono.png"
+boot_splash/bg_color=Color(0.054902, 0.0745098, 0.14902, 1)
+boot_splash/image="res://assets/logo.png"
+boot_splash/fullsize=false
 
 [autoload]
 
