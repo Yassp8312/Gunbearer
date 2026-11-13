@@ -13,6 +13,7 @@ config_version=5
 config/name="Gunbearer"
 config/description="Solo uno tiene el arma, y tenerla te convierte en el blanco de todos."
 run/main_scene="res://scenes/menu.tscn"
+config/icon="res://assets/icono.png"
 config/features=PackedStringArray("4.5", "Forward Plus")
 
 [autoload]

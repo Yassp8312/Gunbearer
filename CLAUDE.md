@@ -68,6 +68,7 @@ scripts/match.gd       Estado de la partida: portador, puntos, tiempo, robos, im
 scripts/player.gd      Un jugador (humano local, remoto o bot)
 scripts/character.gd   Cuerpo visible del jugador: modelo, animaciones, tinte, Lanzador
 scripts/props.gd       Piezas que visten la arena (vallas, neumáticos, contenedores...), por código
+assets/logo.png        Logo del juego (menú y README) y assets/icono.png (icono de la ventana). Los generó Jorge con IA
 assets/kenney_mini/    Personajes y objetos "Mini Characters" de Kenney (CC0)
 assets/_zips/          Descargas originales. Fuera de git y de Godot (.gdignore)
 scripts/bot.gd         Cerebro de un bot (RefCounted)

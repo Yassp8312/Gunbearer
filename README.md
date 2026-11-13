@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo.png" alt="Gunbearer" width="560"></p>
+
 # Gunbearer
 
 Shooter de fiesta en 3D: solo uno tiene el Lanzador, y tenerlo te convierte en el blanco de todos.

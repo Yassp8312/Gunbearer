@@ -211,7 +211,16 @@ func _build_main() -> void:
 	left.add_theme_constant_override("separation", 6)
 	left.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_holder.add_child(left)
-	left.add_child(UI.title("GUNBEARER"))
+	# Logo del juego; si falta el archivo, queda el título escrito.
+	if ResourceLoader.exists("res://assets/logo.png"):
+		var logo := TextureRect.new()
+		logo.texture = load("res://assets/logo.png")
+		logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		logo.custom_minimum_size = Vector2(500, 250)
+		left.add_child(logo)
+	else:
+		left.add_child(UI.title("GUNBEARER"))
 	var sub: Label = UI.title("Solo uno tiene el arma. Y tenerla te convierte en el blanco.", UI.F_BODY, UI.TEXT)
 	sub.autowrap_mode = TextServer.AUTOWRAP_OFF
 	left.add_child(sub)
